@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0&display=block">
+<script src="./data.js"></script>
+</helmet>
+<div style="display:flex;flex-direction:column;gap:24px;max-width:1440px;margin:0 auto;font-family:Inter,system-ui,sans-serif;color:#fff">
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap">
+    <div>
+      <div style="font-size:13px;color:#8FA3BF;font-weight:500">Wednesday, October 14 · {{ ctxLabel }}</div>
+      <h1 style="margin:6px 0 0;font-size:34px;font-weight:800;letter-spacing:-.025em">Good morning, Admin</h1>
+      <div style="margin-top:6px;font-size:15px;color:#8FA3BF">12 uploads are waiting for review — the oldest has been in the queue for 2 days.</div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button onClick="{{ goAnalytics }}" style="all:unset;cursor:pointer;height:42px;padding:0 18px;border-radius:21px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px" style-hover="background:rgba(255,255,255,.1)"><span class="material-symbols-rounded" style="font-size:19px">monitoring</span>Full analytics</button>
+      <button onClick="{{ goQueue }}" style="all:unset;cursor:pointer;height:42px;padding:0 20px;border-radius:21px;background:#0A9BFF;font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px;box-shadow:0 8px 24px rgba(10,155,255,.3)" style-hover="background:#2AAAFF"><span class="material-symbols-rounded" style="font-size:19px">inventory</span>Start reviewing</button>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px">
+    <sc-for list="{{ kpis }}" as="c" hint-placeholder-count="6">
+      <div onClick="{{ c.go }}" style="cursor:pointer;border-radius:20px;background:rgba(15,35,64,.55);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(14px);padding:18px 18px 14px;display:flex;flex-direction:column;gap:10px;position:relative;overflow:hidden" style-hover="border-color:rgba(10,155,255,.35)">
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#8FA3BF;font-weight:500"><span class="material-symbols-rounded" style="font-size:18px;color:{{ c.iconColor }}">{{ c.icon }}</span>{{ c.label }}</div>
+        <div style="display:flex;align-items:baseline;gap:10px"><div style="font-size:30px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums">{{ c.value }}</div><div style="font-size:12.5px;font-weight:600;color:{{ c.deltaColor }}">{{ c.delta }}</div></div>
+        <svg viewBox="0 0 100 32" preserveAspectRatio="none" style="width:100%;height:36px;display:block">
+          <path d="{{ c.area }}" fill="{{ c.fill }}"></path>
+          <path d="{{ c.line }}" fill="none" stroke="{{ c.stroke }}" stroke-width="1.6" vector-effect="non-scaling-stroke" stroke-linejoin="round"></path>
+        </svg>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="display:grid;grid-template-columns:minmax(0,2fr) minmax(300px,1fr);gap:16px">
+    <div style="border-radius:24px;background:rgba(15,35,64,.55);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(14px);padding:22px 24px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <div><div style="font-size:17px;font-weight:700">Streams over time</div><div style="font-size:13px;color:#8FA3BF;margin-top:3px">Daily plays, last 30 days</div></div>
+        <div style="display:flex;align-items:center;gap:18px">
+          <sc-if value="{{ showMusic }}"><div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#C9D6E8"><span style="width:10px;height:10px;border-radius:50%;background:#0A9BFF"></span>Music <b style="font-variant-numeric:tabular-nums">2.84M</b></div></sc-if>
+          <sc-if value="{{ showFilms }}"><div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#C9D6E8"><span style="width:10px;height:10px;border-radius:50%;background:#9FD8FF"></span>Films <b style="font-variant-numeric:tabular-nums">1.12M</b></div></sc-if>
+          <div style="display:flex;gap:2px;padding:3px;border-radius:16px;background:rgba(255,255,255,.05)">
+            <span style="font-size:12px;font-weight:600;padding:5px 10px;border-radius:13px;color:#8FA3BF">7D</span><span style="font-size:12px;font-weight:600;padding:5px 10px;border-radius:13px;background:rgba(10,155,255,.2);color:#fff">30D</span><span style="font-size:12px;font-weight:600;padding:5px 10px;border-radius:13px;color:#8FA3BF">90D</span>
+          </div>
+        </div>
+      </div>
+      <div style="position:relative;margin-top:18px;height:250px">
+        <div style="position:absolute;inset:0 0 24px 40px;display:flex;flex-direction:column;justify-content:space-between">
+          <div style="border-top:1px dashed rgba(255,255,255,.07)"></div><div style="border-top:1px dashed rgba(255,255,255,.07)"></div><div style="border-top:1px dashed rgba(255,255,255,.07)"></div><div style="border-top:1px dashed rgba(255,255,255,.07)"></div><div style="border-top:1px solid rgba(255,255,255,.1)"></div>
+        </div>
+        <div style="position:absolute;left:0;top:-7px;bottom:17px;display:flex;flex-direction:column;justify-content:space-between;font-size:11px;color:#5E7290;font-variant-numeric:tabular-nums"><span>160K</span><span>120K</span><span>80K</span><span>40K</span><span>0</span></div>
+        <svg viewBox="0 0 600 226" preserveAspectRatio="none" style="position:absolute;left:40px;right:0;top:0;width:calc(100% - 40px);height:226px">
+          <defs>
+            <linearGradient id="dgM" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0A9BFF" stop-opacity=".35"></stop><stop offset="1" stop-color="#0A9BFF" stop-opacity="0"></stop></linearGradient>
+            <linearGradient id="dgF" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9FD8FF" stop-opacity=".18"></stop><stop offset="1" stop-color="#9FD8FF" stop-opacity="0"></stop></linearGradient>
+          </defs>
+          <sc-if value="{{ showFilms }}"><path d="{{ fArea }}" fill="url(#dgF)"></path><path d="{{ fLine }}" fill="none" stroke="#9FD8FF" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round"></path></sc-if>
+          <sc-if value="{{ showMusic }}"><path d="{{ mArea }}" fill="url(#dgM)"></path><path d="{{ mLine }}" fill="none" stroke="#0A9BFF" stroke-width="2.5" vector-effect="non-scaling-stroke" stroke-linejoin="round"></path></sc-if>
+        </svg>
+        <div style="position:absolute;left:40px;right:0;bottom:0;display:flex;justify-content:space-between;font-size:11px;color:#5E7290"><span>Sep 15</span><span>Sep 22</span><span>Sep 29</span><span>Oct 6</span><span>Oct 14</span></div>
+      </div>
+    </div>
+
+    <div style="border-radius:24px;background:rgba(15,35,64,.55);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(14px);padding:22px 20px;display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between"><div style="font-size:17px;font-weight:700">Needs attention</div><span style="font-size:12px;font-weight:700;padding:4px 10px;border-radius:12px;background:rgba(245,176,65,.14);color:#F5C46B">7 items</span></div>
+      <div style="font-size:11px;font-weight:600;letter-spacing:.1em;color:#5E7290">OLDEST PENDING</div>
+      <sc-for list="{{ oldest }}" as="q" hint-placeholder-count="4">
+        <button onClick="{{ q.open }}" style="all:unset;cursor:pointer;display:flex;align-items:center;gap:12px;padding:6px;margin:-6px;border-radius:14px" style-hover="background:rgba(255,255,255,.04)">
+          <div style="width:42px;height:42px;border-radius:12px;background:{{ q.art }};flex:none"></div>
+          <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ q.title }}</div><div style="font-size:12px;color:#8FA3BF;display:flex;align-items:center;gap:4px"><span class="material-symbols-rounded" style="font-size:14px">{{ q.icon }}</span>{{ q.creator }}</div></div>
+          <span style="font-size:11.5px;font-weight:600;padding:4px 9px;border-radius:11px;background:rgba(245,176,65,.14);color:#F5C46B;white-space:nowrap">{{ q.short }}</span>
+        </button>
+      </sc-for>
+      <div style="font-size:11px;font-weight:600;letter-spacing:.1em;color:#5E7290;margin-top:6px">OPEN REPORTS</div>
+      <sc-for list="{{ openReports }}" as="r" hint-placeholder-count="3">
+        <button onClick="{{ r.open }}" style="all:unset;cursor:pointer;display:flex;align-items:center;gap:12px;padding:6px;margin:-6px;border-radius:14px" style-hover="background:rgba(255,255,255,.04)">
+          <div style="width:42px;height:42px;border-radius:12px;background:rgba(249,128,52,.14);display:flex;align-items:center;justify-content:center;flex:none"><span class="material-symbols-rounded" style="font-size:20px;color:#FBA26A">flag</span></div>
+          <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.item }}</div><div style="font-size:12px;color:#8FA3BF">{{ r.reason }}</div></div>
+          <span style="font-size:12px;font-weight:700;color:#FBA26A;font-variant-numeric:tabular-nums">{{ r.count }}×</span>
+        </button>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,520px),1fr));gap:16px">
+    <sc-if value="{{ showMusic }}">
+    <div style="border-radius:24px;background:rgba(15,35,64,.55);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(14px);padding:22px 24px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px"><div style="display:flex;align-items:center;gap:10px;font-size:17px;font-weight:700"><span class="material-symbols-rounded" style="font-size:22px;color:#0A9BFF">graphic_eq</span>Top tracks this week</div><button onClick="{{ goLibrary }}" style="all:unset;cursor:pointer;font-size:13px;font-weight:600;color:#4DB6FF">See all</button></div>
+      <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px">
+        <sc-for list="{{ topTracks }}" as="t" hint-placeholder-count="5">
+          <div onClick="{{ t.play }}" style="cursor:pointer;display:flex;flex-direction:column;gap:8px;transition:transform .2s" style-hover="transform:scale(1.04)">
+            <div style="aspect-ratio:1;border-radius:16px;background:{{ t.art }};position:relative;border:1px solid rgba(255,255,255,.08);box-shadow:0 10px 24px rgba(0,0,0,.35)">
+              <span style="position:absolute;top:8px;left:8px;font-size:12px;font-weight:800;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.5);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center">{{ t.rank }}</span>
+              <span style="position:absolute;right:8px;bottom:8px;width:32px;height:32px;border-radius:50%;background:rgba(5,11,22,.8);display:flex;align-items:center;justify-content:center"><span class="material-symbols-rounded" style="font-size:20px;font-variation-settings:'FILL' 1">play_arrow</span></span>
+            </div>
+            <div style="min-width:0"><div style="font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.title }}</div><div style="font-size:12px;color:#8FA3BF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.creator }} · {{ t.playsK }}</div></div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+    <sc-if value="{{ showFilms }}">
+    <div style="border-radius:24px;background:rgba(15,35,64,.55);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(14px);padding:22px 24px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px"><div style="display:flex;align-items:center;gap:10px;font-size:17px;font-weight:700"><span class="material-symbols-rounded" style="font-size:22px;color:#0A9BFF">movie</span>Top films this week</div><button onClick="{{ goLibrary }}" style="all:unset;cursor:pointer;font-size:13px;font-weight:600;color:#4DB6FF">See all</button></div>
+      <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px">
+        <sc-for list="{{ topFilms }}" as="t" hint-placeholder-count="5">
+          <div onClick="{{ t.play }}" style="cursor:pointer;display:flex;flex-direction:column;gap:8px;transition:transform .2s" style-hover="transform:scale(1.04)">
+            <div style="aspect-ratio:2/3;max-height:150px;border-radius:14px;background:{{ t.art }};position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.08);box-shadow:0 10px 24px rgba(0,0,0,.35)">
+              <span style="position:absolute;top:8px;left:8px;font-size:12px;font-weight:800;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center">{{ t.rank }}</span>
+              <span style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:34px;height:34px;border-radius:50%;background:rgba(5,11,22,.7);display:flex;align-items:center;justify-content:center"><span class="material-symbols-rounded" style="font-size:20px;font-variation-settings:'FILL' 1">play_arrow</span></span>
+              <div style="position:absolute;left:0;right:0;bottom:0;height:3px;background:rgba(255,255,255,.2)"><div style="height:3px;width:{{ t.progress }};background:#0A9BFF"></div></div>
+            </div>
+            <div style="min-width:0"><div style="font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.title }}</div><div style="font-size:12px;color:#8FA3BF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.genre }} · {{ t.playsK }}</div></div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+  </div>
+
+  <div style="border-radius:24px;background:rgba(15,35,64,.55);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(14px);padding:22px 24px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><div style="font-size:17px;font-weight:700">Recent activity</div><button onClick="{{ goActivity }}" style="all:unset;cursor:pointer;font-size:13px;font-weight:600;color:#4DB6FF">View log</button></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));column-gap:32px">
+      <sc-for list="{{ activity }}" as="a" hint-placeholder-count="6">
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.05)">
+          <div style="width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.05);display:flex;align-items:center;justify-content:center;flex:none"><span class="material-symbols-rounded" style="font-size:18px;color:{{ a.color }}">{{ a.icon }}</span></div>
+          <div style="flex:1;min-width:0"><div style="font-size:13.5px"><b style="font-weight:600">{{ a.action }}</b> <span style="color:#9DB0C9">{{ a.target }}</span></div></div>
+          <div style="font-size:12px;color:#5E7290;white-space:nowrap">{{ a.time }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  componentDidMount() { if (!window.IW) this._w = setInterval(() => { if (window.IW) { clearInterval(this._w); this.forceUpdate(); } }, 40); }
+  componentWillUnmount() { clearInterval(this._w); }
+  renderVals() {
+    const IW = window.IW; if (!IW) return {};
+    const ctx = this.props.ctx || 'All', go = this.props.go || (() => {}), play = this.props.play || (() => {});
+    const showMusic = ctx !== 'Films', showFilms = ctx !== 'Music';
+    const mk = (label, icon, value, delta, up, seed, base, scr) => { const d = IW.series(14, seed, base, base * .18, base * .02); return { label, icon, value, delta, deltaColor: up ? '#5FD99A' : '#F38A8A', iconColor: '#0A9BFF', line: IW.path(d, 100, 30), area: IW.area(d, 100, 30), stroke: '#0A9BFF', fill: 'rgba(10,155,255,.12)', go: () => go(scr) }; };
+    const streams = ctx === 'Music' ? '2.84M' : ctx === 'Films' ? '1.12M' : '3.96M';
+    const kpis = [
+      mk('Total streams (7d)', 'play_circle', streams, '+12.4%', true, 1, 60, 'analytics'),
+      mk('Active listeners', 'headphones', '184.2K', '+6.1%', true, 2, 40, 'listeners'),
+      mk('Live tracks', 'graphic_eq', '1,248', '+38', true, 3, 30, 'library'),
+      mk('Live films', 'movie', '312', '+9', true, 4, 20, 'library'),
+      mk('New creators', 'mic_external_on', '57', '−4.2%', false, 5, 30, 'creators'),
+      { ...mk('Pending reviews', 'inventory', '12', '3 over 36h', false, 6, 20, 'queue'), iconColor: '#F5C46B', stroke: '#F5B041', fill: 'rgba(245,176,65,.12)', deltaColor: '#F5C46B' },
+    ];
+    const mS = IW.series(30, 1, 95000, 14000, 900), fS = IW.series(30, 4, 34000, 9000, 500);
+    const max = 160000;
+    const q = IW.queue.filter(x => ctx === 'All' || x.type === ctx);
+    return {
+      ctxLabel: ctx === 'All' ? 'All of iWire' : 'iWire ' + ctx, kpis, showMusic, showFilms,
+      mLine: IW.path(mS, 600, 226, max), mArea: IW.area(mS, 600, 226, max), fLine: IW.path(fS, 600, 226, max), fArea: IW.area(fS, 600, 226, max),
+      oldest: q.slice(0, 4).map(x => ({ ...x, short: x.hrs >= 48 ? Math.floor(x.hrs / 24) + 'd ' + x.hrs % 24 + 'h' : x.hrs + 'h', open: () => go('review', x.id) })),
+      openReports: IW.reports.filter(r => r.status === 'Open').slice(0, 3).map(r => ({ ...r, open: () => go('reports', r.id) })),
+      topTracks: IW.tracks.slice(0, 5).map((t, i) => ({ ...t, rank: i + 1, play: () => play(t) })),
+      topFilms: IW.films.slice(0, 5).map((t, i) => ({ ...t, rank: i + 1, play: () => play(t) })),
+      activity: IW.activity.filter(a => ctx === 'All' || a.ctx === ctx || a.ctx === 'All').slice(0, 6),
+      goQueue: () => go('queue'), goAnalytics: () => go('analytics'), goLibrary: () => go('library'), goActivity: () => go('activity'),
+    };
+  }
+}
+</script>
+</body>
+</html>

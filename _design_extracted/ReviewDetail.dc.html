@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0&display=block">
+<script src="./data.js"></script>
+</helmet>
+<div style="display:flex;flex-direction:column;gap:20px;max-width:1440px;margin:0 auto;font-family:Inter,system-ui,sans-serif;color:#fff">
+  <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+    <button onClick="{{ back }}" style="all:unset;cursor:pointer;height:38px;padding:0 14px 0 10px;border-radius:19px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:600" style-hover="background:rgba(255,255,255,.1)"><span class="material-symbols-rounded" style="font-size:19px">arrow_back</span>Review Queue</button>
+    <span style="font-size:13.5px;color:#8FA3BF">Submission <b style="color:#fff;font-variant-numeric:tabular-nums">{{ pos }}</b> of {{ total }}</span>
+    <div style="flex:1"></div>
+    <div style="display:flex;align-items:center;gap:10px;font-size:12.5px;color:#8FA3BF">
+      <span style="display:flex;gap:5px;align-items:center"><span style="font-size:11px;font-weight:700;padding:3px 7px;border-radius:7px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#C9D6E8">A</span>Approve</span>
+      <span style="display:flex;gap:5px;align-items:center"><span style="font-size:11px;font-weight:700;padding:3px 7px;border-radius:7px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#C9D6E8">R</span>Reject</span>
+      <span style="display:flex;gap:5px;align-items:center"><span style="font-size:11px;font-weight:700;padding:3px 7px;border-radius:7px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#C9D6E8">J</span><span style="font-size:11px;font-weight:700;padding:3px 7px;border-radius:7px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#C9D6E8">K</span>Next / prev</span>
+    </div>
+    <div style="display:flex;gap:6px">
+      <button onClick="{{ prev }}" title="Previous (K)" style="all:unset;cursor:pointer;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center" style-hover="background:rgba(255,255,255,.1)"><span class="material-symbols-rounded" style="font-size:20px">keyboard_arrow_up</span></button>
+      <button onClick="{{ next }}" title="Next (J)" style="all:unset;cursor:pointer;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center" style-hover="background:rgba(255,255,255,.1)"><span class="material-symbols-rounded" style="font-size:20px">keyboard_arrow_down</span></button>
+    </div>
+  </div>
+
+  <div style="position:relative;border-radius:28px;overflow:hidden;border:1px solid rgba(255,255,255,.08);min-height:300px">
+    <div style="position:absolute;inset:-60px;background:{{ it.art }};filter:blur(60px) saturate(1.2);opacity:.75"></div>
+    <div style="position:absolute;inset:0;background:linear-gradient(180deg, rgba(5,11,22,.15), rgba(5,11,22,.85))"></div>
+    <div style="position:relative;display:flex;align-items:flex-end;gap:28px;padding:32px;flex-wrap:wrap">
+      <div style="width:{{ coverW }};height:220px;border-radius:20px;background:{{ it.art }};flex:none;box-shadow:0 24px 60px rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.12)"></div>
+      <div style="flex:1;min-width:280px;display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:11.5px;font-weight:700;letter-spacing:.06em;padding:5px 10px;border-radius:12px;background:rgba(245,176,65,.18);color:#F5C46B;display:flex;align-items:center;gap:5px"><span style="width:6px;height:6px;border-radius:50%;background:#F5B041"></span>PENDING REVIEW</span>
+          <span style="font-size:12px;font-weight:600;padding:5px 10px;border-radius:12px;background:rgba(5,11,22,.5);color:#C9D6E8;display:flex;align-items:center;gap:5px"><span class="material-symbols-rounded" style="font-size:15px">{{ it.icon }}</span>{{ typeLabel }}</span>
+          <span style="font-size:12px;font-weight:600;padding:5px 10px;border-radius:12px;background:rgba(5,11,22,.5);color:{{ waitColor }}">{{ it.waiting }}</span>
+        </div>
+        <h1 style="margin:0;font-size:56px;font-weight:800;letter-spacing:-.035em;line-height:1">{{ title }}</h1>
+        <div style="display:flex;align-items:center;gap:10px;font-size:14.5px;color:#C9D6E8;flex-wrap:wrap">
+          <span style="width:26px;height:26px;border-radius:50%;background:{{ cr.art }};display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:700">{{ cr.initials }}</span>
+          <b style="color:#fff">{{ it.creator }}</b><span style="color:#5E7290">•</span><span>{{ it.dur }}</span><span style="color:#5E7290">•</span><span>Submitted {{ it.submitted }}</span>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <sc-for list="{{ tags }}" as="t" hint-placeholder-count="3"><span style="font-size:12.5px;font-weight:600;padding:5px 12px;border-radius:14px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.12)">{{ t }}</span></sc-for>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button onClick="{{ openReject }}" style="all:unset;cursor:pointer;height:46px;padding:0 20px;border-radius:23px;background:rgba(240,82,82,.14);border:1px solid rgba(240,82,82,.4);color:#F38A8A;font-weight:700;font-size:14px;display:flex;align-items:center;gap:8px" style-hover="background:rgba(240,82,82,.24)"><span class="material-symbols-rounded" style="font-size:20px">block</span>Reject</button>
+        <button onClick="{{ openFeature }}" style="all:unset;cursor:pointer;height:46px;padding:0 20px;border-radius:23px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);font-weight:700;font-size:14px;display:flex;align-items:center;gap:8px" style-hover="background:rgba(255,255,255,.14)"><span class="material-symbols-rounded" style="font-size:20px">star</span>Approve & Feature</button>
+        <button onClick="{{ approve }}" style="all:unset;cursor:pointer;height:46px;padding:0 22px;border-radius:23px;background:#0A9BFF;font-weight:700;font-size:14px;display:flex;align-items:center;gap:8px;box-shadow:0 10px 30px rgba(10,155,255,.4)" style-hover="background:#2AAAFF"><span class="material-symbols-rounded" style="font-size:20px">check_circle</span>Approve & Publish</button>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:minmax(0,1.7fr) minmax(320px,1fr);gap:16px;align-items:start">
+    <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+      <sc-if value="{{ isMusic }}" hint-placeholder-val="{{ true }}">
+      <div style="border-radius:24px;background:rgba(15,35,64,.55);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(14px);padding:22px 24px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px"><div style="font-size:17px;font-weight:700">Audio preview</div><div style="font-size:12.5px;color:#8FA3BF">WAV · 24-bit · 48 kHz · Stereo</div></div>
+        <div style="display:flex;align-items:center;gap:18px">
+          <button onClick="{{ togglePlay }}" style="all:unset;cursor:pointer;width:58px;height:58px;border-radius:50%;background:#0A9BFF;display:flex;align-items:center;justify-content:center;flex:none;box-shadow:0 8px 24px rgba(10,155,255,.4)" style-hover="background:#2AAAFF"><span class="material-symbols-rounded" style="font-size:34px;font-variation-settings:'FILL' 1">{{ playIcon }}</span></button>
+          <div style="flex:1;min-width:0">
+            <div onClick="{{ seek }}" onMouseMove="{{ hover }}" onMouseLeave="{{ unhover }}" style="height:96px;display:flex;align-items:center;gap:2px;cursor:pointer;position:relative">
+              <sc-for list="{{ wave }}" as="b" hint-placeholder-count="120"><div style="flex:1;height:{{ b.h }};border-radius:2px;background:{{ b.c }}"></div></sc-for>
+              <div style="position:absolute;top:-4px;bottom:-4px;left:{{ posPct }};width:2px;background:#fff;border-radius:1px;box-shadow:0 0 10px rgba(10,155,255,.9)"></div>
+              <sc-if value="{{ hovering }}"><div style="position:absolute;top:-30px;left:{{ hoverPct }};transform:translateX(-50%);font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:8px;background:#fff;color:#050B16;font-variant-numeric:tabular-nums">{{ hoverTime }}</div></sc-if>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;color:#8FA3BF;margin-top:8px;font-variant-numeric:tabular-nums"><span>{{ curTime }}</span><span style="display:flex;gap:16px"><span>Peak −0.8 dB</span><span>LUFS −9.4</span></span><span>{{ it.dur }}</span></div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+      <sc-if value="{{ isFilm }}" hint-placeholder-val="{{ false }}">
+      <div style="border-radius:24px;background:rgba(15,35,64,.55);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(14px);padding:16px">
+        <div style="aspect-ratio:16/9;border-radius:18px;background:{{ it.art }};position:relative;overflow:hidden">
+          <div style="position:absolute;inset:0;background:linear-gradient(180deg, rgba(0,0,0,.0) 55%, rgba(0,0,0,.75))"></div>
+          <button onClick="{{ togglePlay }}" style="all:unset;cursor:pointer;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:76px;height:76px;border-radius:50%;background:rgba(5,11,22,.6);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center" style-hover="background:#0A9BFF"><span class="material-symbols-rounded" style="font-size:44px;font-variation-settings:'FILL' 1">{{ playIcon }}</span></button>
+          <div style="position:absolute;left:20px;right:20px;bottom:16px;display:flex;flex-direction:column;gap:10px">
+            <div onClick="{{ seek }}" onMouseMove="{{ hover }}" onMouseLeave="{{ unhover }}" style="height:18px;display:flex;align-items:center;cursor:pointer;position:relative">
+              <div style="height:5px;width:100%;border-radius:3px;background:rgba(255,255,255,.25);position:relative"><div style="position:absolute;left:0;top:0;bottom:0;width:{{ posPct }};background:#0A9BFF;border-radius:3px"></div><div style="position:absolute;top:50%;left:{{ posPct }};width:14px;height:14px;border-radius:50%;background:#fff;transform:translate(-50%,-50%)"></div></div>
+              <sc-if value="{{ hovering }}">
+                <div style="position:absolute;bottom:26px;left:{{ hoverPct }};transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:6px">
+                  <div style="width:168px;aspect-ratio:16/9;border-radius:10px;background:{{ hoverArt }};border:2px solid #fff;box-shadow:0 10px 30px rgba(0,0,0,.6)"></div>
+                  <span style="font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:7px;background:#fff;color:#050B16;font-variant-numeric:tabular-nums">{{ hoverTime }}</span>
+                </div>
+              </sc-if>
+            </div>
+            <div style="display:flex;align-items:center;gap:14px;font-size:13px;font-variant-numeric:tabular-nums">
+              <span class="material-symbols-rounded" style="font-size:22px">replay_10</span><span class="material-symbols-rounded" style="font-size:22px">forward_10</span><span class="material-symbols-rounded" style="font-size:22px">volume_up</span>
+              <span>{{ curTime }} / {{ filmDur }}</span><div style="flex:1"></div>
+              <span style="font-size:11px;font-weight:700;padding:2px 6px;border-radius:5px;border:1px solid rgba(255,255,255,.5)">4K</span><span class="material-symbols-rounded" style="font-size:22px">subtitles</span><span class="material-symbols-rounded" style="font-size:22px">fullscreen</span>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:12px">
+          <sc-for list="{{ thumbs }}" as="t" hint-placeholder-count="8"><div onClick="{{ t.go }}" style="cursor:pointer;flex:1;aspect-ratio:16/9;border-radius:8px;background:{{ t.art }};border:2px solid {{ t.border }};opacity:{{ t.op }}"></div></sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <div style="border-radius:24px;background:rgba(15,35,64,.55);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(14px);padding:22px 24px;display:flex;flex-direction:column;gap:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between"><div style="font-size:17px;font-weight:700">Metadata</div><span style="font-size:12.5px;color:#8FA3BF;display:flex;align-items:center;gap:6px"><span class="material-symbols-rounded" style="font-size:16px">edit</span>Click any field to edit — changes save with the decision</span></div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px">
+          <label style="display:flex;flex-direction:column;gap:7px"><span style="font-size:12px;font-weight:600;color:#8FA3BF">Title</span><input value="{{ title }}" onChange="{{ setTitle }}" style="height:44px;border-radius:14px;background:rgba(5,11,22,.4);border:1px solid rgba(255,255,255,.1);padding:0 14px;font-size:14.5px;color:#fff;outline:none" style-focus="border-color:#0A9BFF;box-shadow:0 0 0 3px rgba(10,155,255,.2)"></label>
+          <label style="display:flex;flex-direction:column;gap:7px"><span style="font-size:12px;font-weight:600;color:#8FA3BF">Genre</span>
+            <select value="{{ genre }}" onChange="{{ setGenre }}" style="appearance:none;height:44px;border-radius:14px;background:rgba(5,11,22,.4);border:1px solid rgba(255,255,255,.1);padding:0 14px;font-size:14.5px;color:#fff;outline:none">
+              <sc-for list="{{ genreOpts }}" as="g"><option value="{{ g }}" style="background:#0F2340">{{ g }}</option></sc-for>
+            </select></label>
+        </div>
+        <label style="display:flex;flex-direction:column;gap:7px"><span style="font-size:12px;font-weight:600;color:#8FA3BF">Description</span><textarea value="{{ desc }}" onChange="{{ setDesc }}" rows="3" style="border-radius:14px;background:rgba(5,11,22,.4);border:1px solid rgba(255,255,255,.1);padding:12px 14px;font-size:14px;line-height:1.5;color:#fff;outline:none;resize:vertical" style-focus="border-color:#0A9BFF;box-shadow:0 0 0 3px rgba(10,155,255,.2)"></textarea></label>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-radius:16px;background:rgba(5,11,22,.3);border:1px solid rgba(255,255,255,.06)">
+          <div><div style="font-size:14px;font-weight:600">Explicit content</div><div style="font-size:12.5px;color:#8FA3BF;margin-top:2px">Shows an “E” badge and hides from listeners with filters on</div></div>
+          <button onClick="{{ toggleExplicit }}" style="all:unset;cursor:pointer;width:46px;height:26px;border-radius:13px;background:{{ exBg }};position:relative;transition:background .2s"><span style="position:absolute;top:3px;left:{{ exLeft }};width:20px;height:20px;border-radius:50%;background:#fff;transition:left .2s"></span></button>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div style="border-radius:24px;background:rgba(15,35,64,.55);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(14px);padding:20px 22px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><div style="font-size:17px;font-weight:700">Automated checks</div><span style="font-size:12px;font-weight:600;color:#8FA3BF">{{ passLabel }}</span></div>
+        <sc-for list="{{ checks }}" as="c" hint-placeholder-count="4">
+          <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid rgba(255,255,255,.05)">
+            <span class="material-symbols-rounded" style="font-size:21px;color:{{ c.color }};font-variation-settings:'FILL' 1">{{ c.icon }}</span>
+            <div style="flex:1"><div style="font-size:13.5px;font-weight:600">{{ c.label }}</div><div style="font-size:12.5px;color:#8FA3BF">{{ c.value }}</div></div>
+          </div>
+        </sc-for>
+        <sc-if value="{{ dup }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:8px;padding:14px;border-radius:16px;background:rgba(249,128,52,.1);border:1px solid rgba(249,128,52,.3);display:flex;gap:12px">
+            <div style="width:44px;height:44px;border-radius:10px;background:{{ dupArt }};flex:none"></div>
+            <div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:700;color:#FBA26A;display:flex;align-items:center;gap:6px"><span class="material-symbols-rounded" style="font-size:17px">content_copy</span>Possible duplicate · {{ dupScore }}</div><div style="font-size:12.5px;color:#C9D6E8;margin-top:3px">Matches “{{ dupTitle }}” already live by {{ it.creator }}.</div><button onClick="{{ compare }}" style="all:unset;cursor:pointer;font-size:12.5px;font-weight:600;color:#4DB6FF;margin-top:6px">Compare side by side</button></div>
+          </div>
+        </sc-if>
+      </div>
+
+      <div style="border-radius:24px;background:rgba(15,35,64,.55);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(14px);padding:20px 22px;display:flex;flex-direction:column;gap:14px">
+        <div style="font-size:17px;font-weight:700">Creator</div>
+        <div style="display:flex;align-items:center;gap:14px">
+          <div style="width:56px;height:56px;border-radius:50%;background:{{ cr.art }};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;border:2px solid rgba(255,255,255,.15)">{{ cr.initials }}</div>
+          <div style="flex:1;min-width:0"><div style="font-size:16px;font-weight:700">{{ cr.name }}</div><div style="font-size:13px;color:#8FA3BF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ cr.email }}</div><div style="font-size:12.5px;color:#5E7290;margin-top:2px">{{ cr.type }} · Joined {{ cr.joined }}</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+          <div style="padding:12px;border-radius:14px;background:rgba(5,11,22,.35)"><div style="font-size:20px;font-weight:800;font-variant-numeric:tabular-nums">{{ cr.uploads }}</div><div style="font-size:11.5px;color:#8FA3BF">Uploads</div></div>
+          <div style="padding:12px;border-radius:14px;background:rgba(5,11,22,.35)"><div style="font-size:20px;font-weight:800;color:#5FD99A;font-variant-numeric:tabular-nums">{{ cr.approved }}</div><div style="font-size:11.5px;color:#8FA3BF">Approved</div></div>
+          <div style="padding:12px;border-radius:14px;background:rgba(5,11,22,.35)"><div style="font-size:20px;font-weight:800;color:#F38A8A;font-variant-numeric:tabular-nums">{{ cr.rejected }}</div><div style="font-size:11.5px;color:#8FA3BF">Rejected</div></div>
+        </div>
+        <div><div style="display:flex;justify-content:space-between;font-size:12.5px;color:#8FA3BF;margin-bottom:6px"><span>Approval rate</span><b style="color:#fff">{{ cr.rate }}</b></div><div style="height:6px;border-radius:3px;background:rgba(255,255,255,.08)"><div style="height:6px;border-radius:3px;width:{{ cr.rateW }};background:#0A9BFF"></div></div></div>
+        <button onClick="{{ goCreator }}" style="all:unset;cursor:pointer;height:40px;border-radius:20px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;gap:6px;font-size:13.5px;font-weight:600" style-hover="background:rgba(255,255,255,.1)">View creator profile<span class="material-symbols-rounded" style="font-size:18px">arrow_forward</span></button>
+      </div>
+    </div>
+  </div>
+
+  <sc-if value="{{ rejectOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeModal }}" style="position:fixed;inset:0;z-index:100;background:rgba(2,6,14,.65);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:24px">
+      <div onClick="{{ stop }}" style="width:540px;max-width:100%;border-radius:28px;background:#0E2240;border:1px solid rgba(255,255,255,.1);box-shadow:0 40px 80px rgba(0,0,0,.6);padding:28px;display:flex;flex-direction:column;gap:20px;animation:iwPop .16s ease">
+        <div style="display:flex;gap:16px;align-items:center">
+          <div style="width:52px;height:52px;border-radius:14px;background:{{ it.art }};flex:none"></div>
+          <div style="flex:1"><div style="font-size:20px;font-weight:800;letter-spacing:-.01em">Reject “{{ title }}”?</div><div style="font-size:13.5px;color:#8FA3BF;margin-top:3px">{{ it.creator }} will be notified with your reason and note.</div></div>
+          <button onClick="{{ closeModal }}" style="all:unset;cursor:pointer;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#8FA3BF" style-hover="background:rgba(255,255,255,.06)"><span class="material-symbols-rounded">close</span></button>
+        </div>
+        <div><div style="font-size:12.5px;font-weight:600;color:#8FA3BF;margin-bottom:10px">Reason</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px">
+            <sc-for list="{{ reasons }}" as="r" hint-placeholder-count="5"><button onClick="{{ r.toggle }}" style="all:unset;cursor:pointer;height:36px;padding:0 16px;border-radius:18px;font-size:13.5px;font-weight:600;background:{{ r.bg }};border:1px solid {{ r.border }};color:{{ r.color }};display:flex;align-items:center;gap:6px"><sc-if value="{{ r.on }}"><span class="material-symbols-rounded" style="font-size:17px">check</span></sc-if>{{ r.label }}</button></sc-for>
+          </div>
+        </div>
+        <label style="display:flex;flex-direction:column;gap:8px"><span style="font-size:12.5px;font-weight:600;color:#8FA3BF">Note to creator</span><textarea value="{{ note }}" onChange="{{ setNote }}" rows="4" placeholder="Explain what needs to change so they can resubmit…" style="border-radius:16px;background:rgba(5,11,22,.45);border:1px solid rgba(255,255,255,.1);padding:12px 14px;font-size:14px;line-height:1.5;color:#fff;outline:none;resize:none" style-focus="border-color:#0A9BFF;box-shadow:0 0 0 3px rgba(10,155,255,.2)"></textarea></label>
+        <div style="display:flex;justify-content:flex-end;gap:10px">
+          <button onClick="{{ closeModal }}" style="all:unset;cursor:pointer;height:44px;padding:0 20px;border-radius:22px;font-size:14px;font-weight:600;color:#C9D6E8" style-hover="background:rgba(255,255,255,.06)">Cancel</button>
+          <button onClick="{{ confirmReject }}" style="all:unset;cursor:pointer;height:44px;padding:0 22px;border-radius:22px;font-size:14px;font-weight:700;background:#E04848;opacity:{{ rejOp }};display:flex;align-items:center;gap:8px" style-hover="background:#EC5A5A"><span class="material-symbols-rounded" style="font-size:19px">send</span>Send rejection</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ featureOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeModal }}" style="position:fixed;inset:0;z-index:100;background:rgba(2,6,14,.65);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:24px">
+      <div onClick="{{ stop }}" style="width:460px;max-width:100%;border-radius:28px;background:#0E2240;border:1px solid rgba(255,255,255,.1);box-shadow:0 40px 80px rgba(0,0,0,.6);padding:26px;display:flex;flex-direction:column;gap:16px;animation:iwPop .16s ease">
+        <div><div style="font-size:20px;font-weight:800">Approve & feature</div><div style="font-size:13.5px;color:#8FA3BF;margin-top:4px">Publish now and add to a curated row on the app home.</div></div>
+        <sc-for list="{{ rows }}" as="r" hint-placeholder-count="3">
+          <button onClick="{{ r.pick }}" style="all:unset;cursor:pointer;display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:18px;background:{{ r.bg }};border:1px solid {{ r.border }}">
+            <span class="material-symbols-rounded" style="font-size:22px;color:#0A9BFF">{{ r.icon }}</span>
+            <div style="flex:1"><div style="font-size:14.5px;font-weight:700">{{ r.label }}</div><div style="font-size:12.5px;color:#8FA3BF">{{ r.sub }}</div></div>
+            <span style="width:20px;height:20px;border-radius:50%;border:2px solid {{ r.radio }};display:flex;align-items:center;justify-content:center"><span style="width:10px;height:10px;border-radius:50%;background:#0A9BFF;opacity:{{ r.op }}"></span></span>
+          </button>
+        </sc-for>
+        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:4px">
+          <button onClick="{{ closeModal }}" style="all:unset;cursor:pointer;height:44px;padding:0 20px;border-radius:22px;font-size:14px;font-weight:600;color:#C9D6E8">Cancel</button>
+          <button onClick="{{ confirmFeature }}" style="all:unset;cursor:pointer;height:44px;padding:0 22px;border-radius:22px;font-size:14px;font-weight:700;background:#0A9BFF;display:flex;align-items:center;gap:8px"><span class="material-symbols-rounded" style="font-size:19px">star</span>Publish & feature</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { idx: null, playing: false, pos: 0.28, hoverX: null, edits: {}, modal: null, reasons: {}, note: '', row: 0 };
+  componentDidMount() {
+    if (!window.IW) this._w = setInterval(() => { if (window.IW) { clearInterval(this._w); this.forceUpdate(); } }, 40);
+    if ((this.props.param || '').endsWith(':reject')) this.setState({ modal: 'reject' });
+    this._k = e => {
+      if (/INPUT|TEXTAREA|SELECT/.test(e.target.tagName) || e.metaKey || e.ctrlKey) return;
+      const k = e.key.toLowerCase();
+      if (this.state.modal) return;
+      if (k === 'a') this.approve(); else if (k === 'r') this.setState({ modal: 'reject' }); else if (k === 'j') this.step(1); else if (k === 'k') this.step(-1);
+    };
+    window.addEventListener('keydown', this._k);
+    this._t = setInterval(() => { if (this.state.playing) this.setState(s => ({ pos: s.pos >= 1 ? 0 : s.pos + 0.005 })); }, 400);
+  }
+  componentWillUnmount() { clearInterval(this._w); clearInterval(this._t); window.removeEventListener('keydown', this._k); }
+  cur() { const IW = window.IW; if (this.state.idx != null) return this.state.idx; const id = (this.props.param || 'q0').split(':')[0]; const i = IW.queue.findIndex(q => q.id === id); return i < 0 ? 0 : i; }
+  step(d) { const n = window.IW.queue.length; this.setState({ idx: (this.cur() + d + n) % n, edits: {}, pos: 0.0, playing: false, modal: null, reasons: {}, note: '' }); }
+  approve(msg) { const it = window.IW.queue[this.cur()]; (this.props.toast || (() => {}))(msg || `${it.type === 'Music' ? 'Track' : 'Film'} approved and now live`, 'ok'); this.step(1); }
+  renderVals() {
+    const IW = window.IW; if (!IW) return {};
+    const s = this.state, go = this.props.go || (() => {});
+    const i = this.cur(), it = IW.queue[i], e = s.edits;
+    const isMusic = it.type === 'Music';
+    const cr = IW.creators.find(c => c.name === it.creator) || { name: it.creator, initials: it.creator.split(' ').map(x => x[0]).join(''), email: it.creator.toLowerCase().replace(/ /g, '.') + '@mail.com', type: isMusic ? 'Musician' : 'Filmmaker', joined: 'Jun 2025', uploads: 6, approved: 5, rejected: 1, rate: '83%', rateW: '83%', art: IW.art(i, 0) };
+    const title = e.title ?? it.title, genre = e.genre ?? it.genre;
+    const desc = e.desc ?? (isMusic ? `A ${it.genre.toLowerCase()} cut recorded at Blue Room Studios. Produced by ${it.creator} with live drums and analog synths.` : `A ${it.genre.toLowerCase()} feature following a small crew across one long winter. Directed by ${it.creator}.`);
+    const explicit = e.explicit ?? (i % 3 === 0);
+    const wv = IW.wave(120, i * 11 + 3);
+    const hp = s.hoverX;
+    const totalSec = isMusic ? (() => { const p = it.dur.split(':'); return +p[0] * 60 + +p[1]; })() : 96 * 60;
+    const fmt = x => { x = Math.floor(x); return x >= 3600 ? Math.floor(x / 3600) + ':' + String(Math.floor(x % 3600 / 60)).padStart(2, '0') + ':' + String(x % 60).padStart(2, '0') : Math.floor(x / 60) + ':' + String(x % 60).padStart(2, '0'); };
+    const dup = i % 3 === 0;
+    const dupT = IW.tracks.concat(IW.films).find(t => t.creator === it.creator) || IW.tracks[1];
+    const checks = isMusic ? [
+      ['File format', 'WAV, 24-bit / 48 kHz', true], ['Duration', it.dur + ' · within 30s–15m limit', true], ['Bitrate', '2,304 kbps lossless', true], ['Cover art', '3000 × 3000 JPG', true],
+    ] : [
+      ['File format', 'MP4 · H.264 / AAC', true], ['Duration', it.dur + ' · within limit', true], ['Resolution', '3840 × 2160 · 24 fps', true], ['Subtitles', 'Missing — recommended', false],
+    ];
+    const reasonList = ['Copyright', 'Quality', 'Inappropriate', 'Metadata issues', 'Other'];
+    const anyReason = Object.values(s.reasons).some(Boolean);
+    const rows = (isMusic ? [['Top Picks', 'Music home · row 2', 'star'], ['Find Your Mood', 'Music home · row 1 · ' + (IW.tracks.find(t => t.genre === it.genre) || { mood: 'Chill' }).mood, 'mood']] : [['Hero banner', 'Films home · carousel', 'view_carousel'], ['Trending Now', 'Films home · row 1', 'trending_up'], ['New', 'Films home · row 2', 'fiber_new']]);
+    const close = () => this.setState({ modal: null });
+    return {
+      it, title, genre, desc, cr, isMusic, isFilm: !isMusic, coverW: isMusic ? '220px' : '330px', typeLabel: isMusic ? 'Track' : 'Film',
+      waitColor: it.urgent ? '#F5C46B' : '#C9D6E8', pos: i + 1, total: IW.queue.length,
+      tags: [genre, isMusic ? (IW.tracks.find(t => t.genre === genre) || { mood: 'Chill' }).mood : 'Feature', explicit ? 'Explicit' : 'Clean', isMusic ? 'Single' : 'English'],
+      back: () => go('queue'), prev: () => this.step(-1), next: () => this.step(1),
+      playIcon: s.playing ? 'pause' : 'play_arrow', togglePlay: () => this.setState(st => ({ playing: !st.playing })),
+      wave: wv.map((h, k) => ({ h: Math.max(8, h) + '%', c: k / wv.length < s.pos ? '#0A9BFF' : (hp != null && k / wv.length < hp ? 'rgba(10,155,255,.45)' : 'rgba(255,255,255,.18)') })),
+      posPct: (s.pos * 100).toFixed(2) + '%', curTime: fmt(s.pos * totalSec), filmDur: fmt(totalSec),
+      seek: ev => { const r = ev.currentTarget.getBoundingClientRect(); this.setState({ pos: Math.min(1, Math.max(0, (ev.clientX - r.left) / r.width)) }); },
+      hover: ev => { const r = ev.currentTarget.getBoundingClientRect(); this.setState({ hoverX: Math.min(1, Math.max(0, (ev.clientX - r.left) / r.width)) }); },
+      unhover: () => this.setState({ hoverX: null }), hovering: hp != null, hoverPct: ((hp || 0) * 100).toFixed(2) + '%', hoverTime: fmt((hp || 0) * totalSec),
+      hoverArt: IW.art(i + Math.floor((hp || 0) * 8), Math.floor((hp || 0) * 5) % 5),
+      thumbs: Array.from({ length: 8 }, (_, k) => { const on = Math.floor(s.pos * 8) === k; return { art: IW.art(i + k, k % 5), border: on ? '#0A9BFF' : 'transparent', op: on ? 1 : .6, go: () => this.setState({ pos: k / 8 + 0.01 }) }; }),
+      setTitle: ev => this.setState({ edits: { ...e, title: ev.target.value } }), setGenre: ev => this.setState({ edits: { ...e, genre: ev.target.value } }), setDesc: ev => this.setState({ edits: { ...e, desc: ev.target.value } }),
+      genreOpts: isMusic ? ['Hip-Hop', 'R&B', 'Electronic', 'Lo-fi', 'Afrobeats', 'Soul'] : ['Drama', 'Action', 'Documentary', 'Fantasy', 'Thriller'],
+      toggleExplicit: () => this.setState({ edits: { ...e, explicit: !explicit } }), exBg: explicit ? '#0A9BFF' : 'rgba(255,255,255,.15)', exLeft: explicit ? '23px' : '3px',
+      checks: checks.map(c => ({ label: c[0], value: c[1], icon: c[2] ? 'check_circle' : 'error', color: c[2] ? '#5FD99A' : '#F5C46B' })),
+      passLabel: checks.filter(c => c[2]).length + '/' + checks.length + ' passed' + (dup ? ' · 1 warning' : ''),
+      dup, dupTitle: dupT.title, dupArt: dupT.art, dupScore: isMusic ? '92% audio match' : '87% frame match', compare: () => go('library', dupT.id),
+      goCreator: () => go('creators', cr.id),
+      approve: () => this.approve(), openReject: () => this.setState({ modal: 'reject' }), openFeature: () => this.setState({ modal: 'feature' }),
+      rejectOpen: s.modal === 'reject', featureOpen: s.modal === 'feature', closeModal: close, stop: ev => ev.stopPropagation(),
+      reasons: reasonList.map(r => { const on = !!s.reasons[r]; return { label: r, on, toggle: () => this.setState(st => ({ reasons: { ...st.reasons, [r]: !st.reasons[r] } })), bg: on ? 'rgba(240,82,82,.18)' : 'rgba(255,255,255,.05)', border: on ? 'rgba(240,82,82,.55)' : 'rgba(255,255,255,.1)', color: on ? '#F8A5A5' : '#C9D6E8' }; }),
+      note: s.note, setNote: ev => this.setState({ note: ev.target.value }), rejOp: anyReason ? 1 : .45,
+      confirmReject: () => { if (!anyReason) return; (this.props.toast || (() => {}))(`“${title}” rejected — ${it.creator} notified`, 'bad'); this.step(1); },
+      rows: rows.map((r, k) => ({ label: r[0], sub: r[1], icon: r[2], pick: () => this.setState({ row: k }), bg: s.row === k ? 'rgba(10,155,255,.12)' : 'rgba(255,255,255,.03)', border: s.row === k ? 'rgba(10,155,255,.5)' : 'rgba(255,255,255,.08)', radio: s.row === k ? '#0A9BFF' : 'rgba(255,255,255,.3)', op: s.row === k ? 1 : 0 })),
+      confirmFeature: () => this.approve(`Live and featured in “${rows[Math.min(s.row, rows.length - 1)][0]}”`),
+    };
+  }
+}
+</script>
+</body>
+</html>

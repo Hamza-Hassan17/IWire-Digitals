@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0&display=block">
+<script src="./data.js"></script>
+</helmet>
+<div style="display:flex;flex-direction:column;gap:20px;max-width:1440px;margin:0 auto;font-family:Inter,system-ui,sans-serif;color:#fff">
+<sc-if value="{{ isList }}" hint-placeholder-val="{{ true }}">
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap">
+    <div><h1 style="margin:0;font-size:32px;font-weight:800;letter-spacing:-.025em">Library</h1><div style="margin-top:6px;font-size:15px;color:#8FA3BF">{{ libCount }}</div></div>
+    <div style="display:flex;gap:4px;padding:4px;border-radius:24px;background:rgba(15,35,64,.6);border:1px solid rgba(255,255,255,.08)">
+      <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="2"><button onClick="{{ t.pick }}" style="all:unset;cursor:pointer;height:38px;padding:0 18px;border-radius:19px;display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;background:{{ t.bg }};color:{{ t.color }}"><span class="material-symbols-rounded" style="font-size:19px">{{ t.icon }}</span>{{ t.label }}</button></sc-for>
+    </div>
+  </div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+    <div style="flex:1;min-width:240px;max-width:380px;height:42px;border-radius:21px;background:rgba(15,35,64,.6);border:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:10px;padding:0 16px">
+      <span class="material-symbols-rounded" style="font-size:20px;color:#8FA3BF">search</span>
+      <input value="{{ q }}" onChange="{{ setQ }}" placeholder="Search title or creator" style="flex:1;background:none;border:0;outline:none;font-size:14px;color:#fff">
+    </div>
+    <sc-for list="{{ filters }}" as="f" hint-placeholder-count="4">
+      <label style="height:42px;border-radius:21px;background:rgba(15,35,64,.6);border:1px solid {{ f.border }};display:flex;align-items:center;gap:6px;padding:0 6px 0 14px;font-size:13px;color:#8FA3BF">
+        <span class="material-symbols-rounded" style="font-size:18px">{{ f.icon }}</span>
+        <select value="{{ f.value }}" onChange="{{ f.set }}" style="appearance:none;background:none;border:0;outline:none;color:#fff;font-size:13px;font-weight:600;padding:0 8px;cursor:pointer">
+          <sc-for list="{{ f.opts }}" as="o"><option value="{{ o }}" style="background:#0F2340">{{ o }}</option></sc-for>
+        </select>
+      </label>
+    </sc-for>
+    <div style="flex:1"></div>
+    <div style="display:flex;gap:2px;padding:4px;border-radius:21px;background:rgba(15,35,64,.6);border:1px solid rgba(255,255,255,.08)">
+      <button onClick="{{ setGrid }}" style="all:unset;cursor:pointer;width:34px;height:32px;border-radius:16px;display:flex;align-items:center;justify-content:center;background:{{ gridBg }}"><span class="material-symbols-rounded" style="font-size:19px">grid_view</span></button>
+      <button onClick="{{ setTable }}" style="all:unset;cursor:pointer;width:34px;height:32px;border-radius:16px;display:flex;align-items:center;justify-content:center;background:{{ tableBg }}"><span class="material-symbols-rounded" style="font-size:19px">view_list</span></button>
+    </div>
+  </div>
+
+  <sc-if value="{{ showGrid }}" hint-placeholder-val="{{ true }}">
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax({{ minCol }},1fr));gap:22px 18px">
+      <sc-for list="{{ items }}" as="it" hint-placeholder-count="10">
+        <div onClick="{{ it.open }}" style="cursor:pointer;display:flex;flex-direction:column;gap:10px;transition:transform .2s" style-hover="transform:scale(1.04)">
+          <div style="aspect-ratio:{{ ratio }};border-radius:18px;background:{{ it.art }};position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.08);box-shadow:0 14px 30px rgba(0,0,0,.35)">
+            <span style="position:absolute;top:10px;left:10px;font-size:11px;font-weight:700;padding:4px 9px;border-radius:10px;background:rgba(5,11,22,.72);backdrop-filter:blur(6px);color:{{ it.st.fg }};display:flex;align-items:center;gap:5px"><span style="width:6px;height:6px;border-radius:50%;background:{{ it.st.dot }}"></span>{{ it.status }}</span>
+            <button onClick="{{ it.play }}" style="all:unset;cursor:pointer;position:absolute;right:10px;bottom:12px;width:40px;height:40px;border-radius:50%;background:rgba(5,11,22,.8);display:flex;align-items:center;justify-content:center" style-hover="background:#0A9BFF"><span class="material-symbols-rounded" style="font-size:24px;font-variation-settings:'FILL' 1">play_arrow</span></button>
+            <sc-if value="{{ isFilms }}"><div style="position:absolute;left:0;right:0;bottom:0;height:4px;background:rgba(255,255,255,.18)"><div style="height:4px;width:{{ it.progress }};background:#0A9BFF"></div></div></sc-if>
+          </div>
+          <div style="min-width:0"><div style="font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ it.title }}</div><div style="font-size:13px;color:#8FA3BF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ it.creator }} · {{ it.genre }}</div><div style="font-size:12px;color:#5E7290;margin-top:3px;display:flex;align-items:center;gap:4px"><span class="material-symbols-rounded" style="font-size:14px">play_arrow</span>{{ it.playsK }} plays</div></div>
+        </div>
+      </sc-for>
+    </div>
+  </sc-if>
+  <sc-if value="{{ showTable }}" hint-placeholder-val="{{ false }}">
+    <div style="border-radius:22px;background:rgba(15,35,64,.55);border:1px solid rgba(255,255,255,.08);overflow:auto;max-height:680px">
+      <table style="width:100%;border-collapse:collapse;font-size:13.5px;min-width:860px">
+        <thead><tr style="position:sticky;top:0;background:#0D203C;z-index:1">
+          <th style="padding:14px 18px;text-align:left;font-size:11.5px;font-weight:600;letter-spacing:.06em;color:#8FA3BF;text-transform:uppercase">Title</th>
+          <th style="padding:14px 12px;text-align:left;font-size:11.5px;font-weight:600;letter-spacing:.06em;color:#8FA3BF;text-transform:uppercase">Genre</th>
+          <th style="padding:14px 12px;text-align:left;font-size:11.5px;font-weight:600;letter-spacing:.06em;color:#8FA3BF;text-transform:uppercase">Status</th>
+          <th style="padding:14px 12px;text-align:right;font-size:11.5px;font-weight:600;letter-spacing:.06em;color:#8FA3BF;text-transform:uppercase">Plays</th>
+          <th style="padding:14px 12px;text-align:right;font-size:11.5px;font-weight:600;letter-spacing:.06em;color:#8FA3BF;text-transform:uppercase">Shares</th>
+          <th style="padding:14px 12px;text-align:right;font-size:11.5px;font-weight:600;letter-spacing:.06em;color:#8FA3BF;text-transform:uppercase">Duration</th>
+          <th style="padding:14px 18px 14px 12px;text-align:left;font-size:11.5px;font-weight:600;letter-spacing:.06em;color:#8FA3BF;text-transform:uppercase">Uploaded</th>
+        </tr></thead>
+        <tbody><sc-for list="{{ items }}" as="it" hint-placeholder-count="8">
+          <tr onClick="{{ it.open }}" style="cursor:pointer;border-top:1px solid rgba(255,255,255,.05)" style-hover="background:rgba(255,255,255,.03)">
+            <td style="padding:10px 18px"><div style="display:flex;align-items:center;gap:12px"><div style="width:{{ thumbW }};height:44px;border-radius:10px;background:{{ it.art }};flex:none"></div><div><div style="font-weight:600">{{ it.title }}</div><div style="font-size:12.5px;color:#8FA3BF">{{ it.creator }}</div></div></div></td>
+            <td style="padding:10px 12px;color:#C9D6E8">{{ it.genre }}</td>
+            <td style="padding:10px 12px"><span style="font-size:12px;font-weight:600;padding:4px 10px;border-radius:11px;background:{{ it.st.bg }};color:{{ it.st.fg }};display:inline-flex;align-items:center;gap:6px"><span style="width:6px;height:6px;border-radius:50%;background:{{ it.st.dot }}"></span>{{ it.status }}</span></td>
+            <td style="padding:10px 12px;text-align:right;font-variant-numeric:tabular-nums;font-weight:600">{{ it.playsK }}</td>
+            <td style="padding:10px 12px;text-align:right;font-variant-numeric:tabular-nums;color:#C9D6E8">{{ it.sharesK }}</td>
+            <td style="padding:10px 12px;text-align:right;font-variant-numeric:tabular-nums;color:#C9D6E8">{{ it.dur }}</td>
+            <td style="padding:10px 18px 10px 12px;color:#9DB0C9">{{ it.uploaded }}</td>
+          </tr>
+        </sc-for></tbody>
+      </table>
+    </div>
+  </sc-if>
+  <sc-if value="{{ noItems }}" hint-placeholder-val="{{ false }}">
+    <div style="padding:64px;text-align:center;border-radius:24px;background:rgba(15,35,64,.4);border:1px dashed rgba(255,255,255,.12)"><span class="material-symbols-rounded" style="font-size:40px;color:#5E7290">search_off</span><div style="font-size:18px;font-weight:700;margin-top:10px">No matches</div><div style="font-size:14px;color:#8FA3BF;margin-top:4px">Try a different search or clear filters.</div></div>
+  </sc-if>
+</sc-if>
+
+<sc-if value="{{ isDetail }}" hint-placeholder-val="{{ false }}">
+  <button onClick="{{ back }}" style="all:unset;cursor:pointer;align-self:flex-start;height:38px;padding:0 14px 0 10px;border-radius:19px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:600"><span class="material-symbols-rounded" style="font-size:19px">arrow_back</span>Library</button>
+  <div style="position:relative;border-radius:28px;overflow:hidden;border:1px solid rgba(255,255,255,.08)">
+    <div style="position:absolute;inset:-60px;background:{{ d.art }};filter:blur(60px);opacity:.7"></div>
+    <div style="position:absolute;inset:0;background:linear-gradient(90deg, rgba(5,11,22,.85), rgba(5,11,22,.35))"></div>
+    <div style="position:relative;display:flex;gap:28px;padding:30px;align-items:flex-end;flex-wrap:wrap">
+      <div style="width:{{ dCoverW }};height:200px;border-radius:20px;background:{{ d.art }};flex:none;box-shadow:0 20px 50px rgba(0,0,0,.5);position:relative">
+        <button onClick="{{ replaceCover }}" style="all:unset;cursor:pointer;position:absolute;left:10px;bottom:10px;height:30px;padding:0 12px;border-radius:15px;background:rgba(5,11,22,.75);backdrop-filter:blur(6px);font-size:12px;font-weight:600;display:flex;align-items:center;gap:5px"><span class="material-symbols-rounded" style="font-size:16px">image</span>Replace cover</button>
+      </div>
+      <div style="flex:1;min-width:260px">
+        <span style="font-size:12px;font-weight:700;padding:5px 10px;border-radius:12px;background:{{ dst.bg }};color:{{ dst.fg }};display:inline-flex;align-items:center;gap:6px"><span style="width:6px;height:6px;border-radius:50%;background:{{ dst.dot }}"></span>{{ dStatus }}</span>
+        <h1 style="margin:12px 0 8px;font-size:48px;font-weight:800;letter-spacing:-.03em;line-height:1">{{ d.title }}</h1>
+        <div style="font-size:14.5px;color:#C9D6E8">{{ d.creator }} · {{ d.genre }} · {{ d.dur }} · Uploaded {{ d.uploaded }}</div>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button onClick="{{ playD }}" style="all:unset;cursor:pointer;height:44px;padding:0 20px;border-radius:22px;background:#0A9BFF;font-weight:700;font-size:14px;display:flex;align-items:center;gap:6px"><span class="material-symbols-rounded" style="font-size:22px;font-variation-settings:'FILL' 1">play_arrow</span>Play</button>
+        <button onClick="{{ togglePub }}" style="all:unset;cursor:pointer;height:44px;padding:0 18px;border-radius:22px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);font-weight:600;font-size:14px;display:flex;align-items:center;gap:6px"><span class="material-symbols-rounded" style="font-size:19px">{{ pubIcon }}</span>{{ pubLabel }}</button>
+        <button onClick="{{ askDelete }}" style="all:unset;cursor:pointer;width:44px;height:44px;border-radius:50%;background:rgba(240,82,82,.14);border:1px solid rgba(240,82,82,.35);color:#F38A8A;display:flex;align-items:center;justify-content:center"><span class="material-symbols-rounded" style="font-size:20px">delete</span></button>
+      </div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px">
+    <sc-for list="{{ dStats }}" as="st" hint-placeholder-count="4">
+      <div style="border-radius:20px;background:rgba(15,35,64,.55);border:1px solid rgba(255,255,255,.08);padding:18px"><div style="font-size:13px;color:#8FA3BF;display:flex;align-items:center;gap:6px"><span class="material-symbols-rounded" style="font-size:18px;color:#0A9BFF">{{ st.icon }}</span>{{ st.label }}</div><div style="font-size:28px;font-weight:800;margin-top:6px;font-variant-numeric:tabular-nums">{{ st.value }}</div><div style="font-size:12.5px;color:#5FD99A;font-weight:600;margin-top:2px">{{ st.delta }}</div></div>
+    </sc-for>
+  </div>
+  <div style="display:grid;grid-template-columns:minmax(0,1.5fr) minmax(300px,1fr);gap:16px;align-items:start">
+    <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+      <div style="border-radius:24px;background:rgba(15,35,64,.55);border:1px solid rgba(255,255,255,.08);padding:22px 24px">
+        <div style="font-size:17px;font-weight:700">Plays · last 30 days</div>
+        <svg viewBox="0 0 600 160" preserveAspectRatio="none" style="width:100%;height:170px;margin-top:14px;display:block">
+          <defs><linearGradient id="lbg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0A9BFF" stop-opacity=".35"></stop><stop offset="1" stop-color="#0A9BFF" stop-opacity="0"></stop></linearGradient></defs>
+          <path d="{{ dArea }}" fill="url(#lbg)"></path><path d="{{ dLine }}" fill="none" stroke="#0A9BFF" stroke-width="2.5" vector-effect="non-scaling-stroke"></path>
+        </svg>
+      </div>
+      <div style="border-radius:24px;background:rgba(15,35,64,.55);border:1px solid rgba(255,255,255,.08);padding:22px 24px;display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:17px;font-weight:700">Edit metadata</div><button onClick="{{ saveMeta }}" style="all:unset;cursor:pointer;height:36px;padding:0 16px;border-radius:18px;background:#0A9BFF;font-size:13px;font-weight:700">Save changes</button></div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px">
+          <label style="display:flex;flex-direction:column;gap:7px"><span style="font-size:12px;font-weight:600;color:#8FA3BF">Title</span><input value="{{ d.title }}" style="height:44px;border-radius:14px;background:rgba(5,11,22,.4);border:1px solid rgba(255,255,255,.1);padding:0 14px;font-size:14.5px;color:#fff;outline:none" style-focus="border-color:#0A9BFF"></label>
+          <label style="display:flex;flex-direction:column;gap:7px"><span style="font-size:12px;font-weight:600;color:#8FA3BF">Genre</span><input value="{{ d.genre }}" style="height:44px;border-radius:14px;background:rgba(5,11,22,.4);border:1px solid rgba(255,255,255,.1);padding:0 14px;font-size:14.5px;color:#fff;outline:none" style-focus="border-color:#0A9BFF"></label>
+          <label style="display:flex;flex-direction:column;gap:7px"><span style="font-size:12px;font-weight:600;color:#8FA3BF">Creator</span><input value="{{ d.creator }}" style="height:44px;border-radius:14px;background:rgba(5,11,22,.4);border:1px solid rgba(255,255,255,.1);padding:0 14px;font-size:14.5px;color:#8FA3BF;outline:none" disabled="{{ true }}"></label>
+        </div>
+        <label style="display:flex;flex-direction:column;gap:7px"><span style="font-size:12px;font-weight:600;color:#8FA3BF">Description</span><textarea rows="3" style="border-radius:14px;background:rgba(5,11,22,.4);border:1px solid rgba(255,255,255,.1);padding:12px 14px;font-size:14px;line-height:1.5;color:#fff;outline:none;resize:vertical">{{ dDesc }}</textarea></label>
+      </div>
+    </div>
+    <div style="border-radius:24px;background:rgba(15,35,64,.55);border:1px solid rgba(255,255,255,.08);padding:20px 22px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-size:17px;font-weight:700">Comments</div><span style="font-size:13px;color:#8FA3BF;font-variant-numeric:tabular-nums">{{ dComments }}</span></div>
+      <sc-for list="{{ dCm }}" as="c" hint-placeholder-count="4">
+        <div style="display:flex;gap:12px;padding:12px 0;border-top:1px solid rgba(255,255,255,.05)">
+          <div style="width:32px;height:32px;border-radius:50%;background:{{ c.hue }};flex:none;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">{{ c.initials }}</div>
+          <div style="flex:1;min-width:0"><div style="font-size:13px"><b>{{ c.user }}</b> <span style="color:#5E7290">· {{ c.time }}</span></div><div style="font-size:13.5px;color:#C9D6E8;margin-top:3px;line-height:1.45">{{ c.text }}</div></div>
+        </div>
+      </sc-for>
+      <button onClick="{{ goComments }}" style="all:unset;cursor:pointer;font-size:13px;font-weight:600;color:#4DB6FF;margin-top:8px;display:block">Moderate all comments</button>
+    </div>
+  </div>
+  <sc-if value="{{ confirmDel }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ cancelDel }}" style="position:fixed;inset:0;z-index:100;background:rgba(2,6,14,.65);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:24px">
+      <div onClick="{{ stop }}" style="width:420px;max-width:100%;border-radius:26px;background:#0E2240;border:1px solid rgba(255,255,255,.1);padding:26px;display:flex;flex-direction:column;gap:14px;text-align:center;align-items:center">
+        <div style="width:56px;height:56px;border-radius:50%;background:rgba(240,82,82,.15);display:flex;align-items:center;justify-content:center"><span class="material-symbols-rounded" style="font-size:28px;color:#F38A8A">delete_forever</span></div>
+        <div style="font-size:20px;font-weight:800">Delete “{{ d.title }}”?</div>
+        <div style="font-size:14px;color:#8FA3BF;line-height:1.5">This permanently removes the file, its stats and {{ dComments }}. This can’t be undone.</div>
+        <div style="display:flex;gap:10px;margin-top:6px;width:100%">
+          <button onClick="{{ cancelDel }}" style="all:unset;cursor:pointer;flex:1;height:44px;border-radius:22px;background:rgba(255,255,255,.06);font-size:14px;font-weight:600;text-align:center">Cancel</button>
+          <button onClick="{{ doDelete }}" style="all:unset;cursor:pointer;flex:1;height:44px;border-radius:22px;background:#E04848;font-size:14px;font-weight:700;text-align:center">Delete</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</sc-if>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { tab: null, view: 'grid', q: '', status: 'Any status', genre: 'Any genre', creator: 'Any creator', date: 'Any time', detail: undefined, pub: {}, del: false };
+  componentDidMount() { if (!window.IW) this._w = setInterval(() => { if (window.IW) { clearInterval(this._w); this.forceUpdate(); } }, 40); }
+  componentWillUnmount() { clearInterval(this._w); }
+  renderVals() {
+    const IW = window.IW; if (!IW) return {};
+    const s = this.state, go = this.props.go || (() => {}), play = this.props.play || (() => {}), toast = this.props.toast || (() => {});
+    const detailId = s.detail !== undefined ? s.detail : (this.props.param && /^[tf]\d/.test(this.props.param) ? this.props.param : null);
+    const tab = s.tab || (this.props.ctx === 'Films' ? 'Films' : 'Music');
+    const src = tab === 'Music' ? IW.tracks : IW.films;
+    const statusOf = x => s.pub[x.id] || x.status;
+    const items = src.filter(x => (!s.q || (x.title + x.creator).toLowerCase().includes(s.q.toLowerCase())) && (s.status === 'Any status' || statusOf(x) === s.status) && (s.genre === 'Any genre' || x.genre === s.genre) && (s.creator === 'Any creator' || x.creator === s.creator))
+      .map(x => ({ ...x, status: statusOf(x), st: IW.ST[statusOf(x)], sharesK: IW.k(x.shares), open: () => this.setState({ detail: x.id }), play: e => { e.stopPropagation(); play(x); } }));
+    const f = (icon, key, opts) => ({ icon, value: s[key], opts, border: s[key] === opts[0] ? 'rgba(255,255,255,.08)' : 'rgba(10,155,255,.5)', set: e => this.setState({ [key]: e.target.value }) });
+    const d = detailId ? [...IW.tracks, ...IW.films].find(x => x.id === detailId) : null;
+    const out = {
+      isList: !d, isDetail: !!d,
+      tabs: [['Music', 'graphic_eq'], ['Films', 'movie']].map(([label, icon]) => ({ label, icon, pick: () => this.setState({ tab: label, genre: 'Any genre', creator: 'Any creator' }), bg: tab === label ? '#0A9BFF' : 'transparent', color: tab === label ? '#fff' : '#9DB0C9' })),
+      libCount: tab === 'Music' ? '1,248 live tracks · 36 unpublished' : '312 live films · 11 unpublished',
+      q: s.q, setQ: e => this.setState({ q: e.target.value }),
+      filters: [f('radio_button_checked', 'status', ['Any status', 'Live', 'Unpublished', 'Flagged', 'Rejected']), f('category', 'genre', ['Any genre', ...new Set(src.map(x => x.genre))]), f('person', 'creator', ['Any creator', ...new Set(src.map(x => x.creator))]), f('calendar_month', 'date', ['Any time', 'Last 7 days', 'Last 30 days', 'Last 90 days'])],
+      showGrid: s.view === 'grid' && items.length > 0, showTable: s.view === 'table' && items.length > 0, noItems: items.length === 0,
+      gridBg: s.view === 'grid' ? 'rgba(10,155,255,.25)' : 'transparent', tableBg: s.view === 'table' ? 'rgba(10,155,255,.25)' : 'transparent',
+      setGrid: () => this.setState({ view: 'grid' }), setTable: () => this.setState({ view: 'table' }),
+      items, isFilms: tab === 'Films', ratio: tab === 'Films' ? '2/3' : '1', minCol: tab === 'Films' ? '170px' : '190px', thumbW: tab === 'Films' ? '32px' : '44px',
+    };
+    if (d) {
+      const st = statusOf(d), live = st === 'Live';
+      const ser = IW.series(30, d.title.length, 100, 22, 2);
+      Object.assign(out, {
+        d, dStatus: st, dst: IW.ST[st], dCoverW: d.type === 'Films' ? '134px' : '200px',
+        dStats: [{ icon: 'play_circle', label: 'Plays', value: d.playsK, delta: '+8.2% vs last week' }, { icon: 'share', label: 'Shares', value: IW.k(d.shares), delta: '+3.1%' }, { icon: 'chat_bubble', label: 'Comments', value: IW.k(d.comments), delta: '+44 this week' }, { icon: d.type === 'Films' ? 'timelapse' : 'repeat', label: d.type === 'Films' ? 'Avg. completion' : 'Repeat listens', value: d.type === 'Films' ? '64%' : '38%', delta: '+1.4 pts' }],
+        dLine: IW.path(ser, 600, 160, 160, 40), dArea: IW.area(ser, 600, 160, 160, 40),
+        dDesc: d.type === 'Films' ? `A ${d.genre.toLowerCase()} feature directed by ${d.creator}.` : `${d.mood} ${d.genre.toLowerCase()} from ${d.creator}.`,
+        dComments: IW.k(d.comments) + ' comments', dCm: IW.comments.slice(0, 4),
+        pubIcon: live ? 'visibility_off' : 'publish', pubLabel: live ? 'Unpublish' : 'Republish',
+        togglePub: () => { this.setState({ pub: { ...s.pub, [d.id]: live ? 'Unpublished' : 'Live' } }); toast(live ? `“${d.title}” unpublished` : `“${d.title}” is live again`, live ? 'info' : 'ok'); },
+        back: () => this.setState({ detail: null }), playD: () => play(d), replaceCover: () => toast('Cover updated — syncing to app', 'ok'), saveMeta: () => toast('Metadata saved', 'ok'), goComments: () => go('comments'),
+        confirmDel: s.del, askDelete: () => this.setState({ del: true }), cancelDel: () => this.setState({ del: false }), stop: e => e.stopPropagation(),
+        doDelete: () => { this.setState({ del: false, detail: null }); toast(`“${d.title}” deleted`, 'bad'); },
+      });
+    }
+    return out;
+  }
+}
+</script>
+</body>
+</html>
