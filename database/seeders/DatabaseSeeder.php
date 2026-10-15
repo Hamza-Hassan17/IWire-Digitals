@@ -27,6 +27,7 @@ class DatabaseSeeder extends Seeder
         User::updateOrCreate(['email' => 'admin@iwire.app'], [
             'name' => 'Platform Admin',
             'password' => Hash::make('studio-ops-2026'),
+            'account_type' => 'admin',
         ]);
 
         // Creators ----------------------------------------------------------
@@ -242,5 +243,7 @@ class DatabaseSeeder extends Seeder
         foreach ([[0, 'The last fire-keeper heads north · Epic Fantasy'], [2, 'One signal. Twelve hours. · Action'], [1, 'A keeper, a storm, a secret · Drama'], [3, 'Life on the salt flats · Documentary']] as $p => [$fi, $tag]) {
             HeroSlide::create(['content_id' => $f[$fi]->id, 'tagline' => $tag, 'position' => $p]);
         }
+
+        $this->call(DemoAppUsersSeeder::class);
     }
 }

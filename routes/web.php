@@ -2,14 +2,18 @@
 
 use App\Http\Controllers\Admin;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\MediaController;
 use Illuminate\Support\Facades\Route;
+
+// Generated cover / banner art as PNG (used by the mobile API until real artwork is uploaded).
+Route::get('/media/art/{size}/{art}.png', [MediaController::class, 'art'])->name('media.art');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'show'])->name('login');
     Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:10,1');
 });
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'admin'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::post('/context', [Admin\ShellController::class, 'context'])->name('context');
     Route::get('/search', [Admin\ShellController::class, 'search'])->name('search');
@@ -26,7 +30,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/library/{content}', [Admin\LibraryController::class, 'show'])->name('library.show');
     Route::put('/library/{content}', [Admin\LibraryController::class, 'update'])->name('library.update');
     Route::post('/library/{content}/publish', [Admin\LibraryController::class, 'togglePublish'])->name('library.publish');
-    Route::post('/library/{content}/cover', [Admin\LibraryController::class, 'cover'])->name('library.cover');
+    Route::post('/library/{content}/media', [Admin\LibraryController::class, 'media'])->name('library.media');
     Route::delete('/library/{content}', [Admin\LibraryController::class, 'destroy'])->name('library.destroy');
 
     Route::get('/curation', [Admin\CurationController::class, 'index'])->name('curation.index');
@@ -65,4 +69,5 @@ Route::middleware('auth')->group(function () {
     Route::put('/settings/profile', [Admin\SettingsController::class, 'profile'])->name('settings.profile');
     Route::put('/settings/password', [Admin\SettingsController::class, 'password'])->name('settings.password');
     Route::put('/settings/platform', [Admin\SettingsController::class, 'platform'])->name('settings.platform');
+    Route::post('/settings/app', [Admin\SettingsController::class, 'app'])->name('settings.app');
 });

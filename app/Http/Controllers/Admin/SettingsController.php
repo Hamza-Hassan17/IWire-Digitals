@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Api\AppConfigController;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Storage;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -13,7 +15,40 @@ class SettingsController extends Controller
 
     public function index()
     {
-        return view('admin.settings', ['platform' => array_merge(self::DEFAULTS, Setting::get('platform', []))]);
+        return view('admin.settings', [
+            'platform' => array_merge(self::DEFAULTS, Setting::get('platform', [])),
+            'app' => AppConfigController::settings(),
+        ]);
+    }
+
+    /** Values served to the mobile app by GET /api/v1/app/config. */
+    public function app(Request $request)
+    {
+        $data = $request->validate([
+            'maintenance_mode' => 'boolean',
+            'maintenance_message' => 'nullable|string|max:300',
+            'min_app_version' => ['required', 'regex:/^\d+\.\d+\.\d+$/'],
+            'support_email' => 'required|email',
+            'splash_music_title' => 'required|string|max:60',
+            'splash_films_title' => 'required|string|max:60',
+            'splash_music_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:8192',
+            'splash_films_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:8192',
+        ]);
+        $current = AppConfigController::settings();
+        foreach (['splash_music_image', 'splash_films_image'] as $f) {
+            if ($request->hasFile($f)) {
+                if ($current[$f]) {
+                    Storage::disk('public')->delete($current[$f]);
+                }
+                $data[$f] = $request->file($f)->store('app', 'public');
+            } else {
+                $data[$f] = $current[$f];
+            }
+        }
+        $data['maintenance_mode'] = $request->boolean('maintenance_mode');
+        Setting::put('app', $data);
+
+        return back()->with('toast', ['Mobile app settings saved', 'ok']);
     }
 
     public function profile(Request $request)

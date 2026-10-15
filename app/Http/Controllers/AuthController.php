@@ -19,7 +19,8 @@ class AuthController extends Controller
             'password' => ['required'],
         ]);
 
-        if (! Auth::attempt($credentials, $request->boolean('remember'))) {
+        // Mobile app users share the users table; only admins may sign in to the control room.
+        if (! Auth::attempt($credentials + ['account_type' => 'admin'], $request->boolean('remember'))) {
             return back()->withErrors(['email' => 'Those credentials don’t match the admin account.'])->onlyInput('email');
         }
 

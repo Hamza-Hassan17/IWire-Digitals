@@ -22,8 +22,9 @@
     <div class="hero-shade side"></div>
     <div class="hero-body" style="padding:30px">
       <div class="hero-cover" style="width:{{ $films ? '134px' : '200px' }};height:200px;background:{{ $d->art }}">
-        <form method="POST" action="{{ route('library.cover', $d) }}" style="position:absolute;left:10px;bottom:10px">@csrf
-          <button class="row g4" style="height:30px;padding:0 12px;border-radius:15px;background:rgba(5,11,22,.75);backdrop-filter:blur(6px);font-size:12px;font-weight:600"><span class="ms" style="font-size:16px">image</span>Replace cover</button>
+        <form method="POST" action="{{ route('library.media', $d) }}" enctype="multipart/form-data" style="position:absolute;left:10px;bottom:10px">@csrf
+          <label class="row g4" style="cursor:pointer;height:30px;padding:0 12px;border-radius:15px;background:rgba(5,11,22,.75);backdrop-filter:blur(6px);font-size:12px;font-weight:600"><span class="ms" style="font-size:16px">image</span>Replace cover
+            <input type="file" name="cover" accept="image/jpeg,image/png,image/webp" class="hide" onchange="this.form.submit()"></label>
         </form>
       </div>
       <div class="grow" style="min-width:260px">
@@ -69,6 +70,25 @@
           <path d="{{ $area }}" fill="url(#lbg)"/><path d="{{ $line }}" fill="none" stroke="#0A9BFF" stroke-width="2.5" vector-effect="non-scaling-stroke"/>
         </svg>
       </div>
+      <form method="POST" action="{{ route('library.media', $d) }}" enctype="multipart/form-data" class="card col g14">
+        @csrf
+        <div class="row between"><div class="card-title">Media & artwork</div><button class="btn btn-sm btn-primary" style="box-shadow:none"><span class="ms" style="font-size:18px">upload</span>Upload</button></div>
+        <div class="fs13 muted">What the mobile app plays and shows. Media files are private — the app gets a signed link that expires.</div>
+        @if ($errors->hasAny(['cover', 'banner', 'file']))<div class="err">{{ $errors->first('cover') ?: $errors->first('banner') ?: $errors->first('file') }}</div>@endif
+        <div class="fields">
+          <label class="field"><span>{{ $films ? 'Video file (MP4, MOV, WebM)' : 'Audio file (MP3, M4A, WAV, FLAC)' }}</span>
+            <input class="input" style="padding-top:10px" type="file" name="file" accept="{{ $films ? 'video/*' : 'audio/*' }}">
+            <span class="fs12 {{ $d->file_path ? 'green' : 'amber' }}">{{ $d->file_path ? '✓ Uploaded · '.basename($d->file_path) : 'No file yet — the app can’t play this' }}</span></label>
+          <label class="field"><span>{{ $films ? 'Poster (2:3)' : 'Cover (square)' }}</span>
+            <input class="input" style="padding-top:10px" type="file" name="cover" accept="image/jpeg,image/png,image/webp">
+            <span class="fs12 {{ $d->cover_path ? 'green' : 'muted' }}">{{ $d->cover_path ? '✓ Custom artwork' : 'Using generated artwork' }}</span></label>
+          @if ($films)
+            <label class="field"><span>Banner (16:9, hero carousel)</span>
+              <input class="input" style="padding-top:10px" type="file" name="banner" accept="image/jpeg,image/png,image/webp">
+              <span class="fs12 {{ $d->banner_path ? 'green' : 'muted' }}">{{ $d->banner_path ? '✓ Custom banner' : 'Using generated banner' }}</span></label>
+          @endif
+        </div>
+      </form>
       <form method="POST" action="{{ route('library.update', $d) }}" class="card col g14">
         @csrf @method('PUT')
         <input type="hidden" name="explicit" :value="explicit ? 1 : 0">
