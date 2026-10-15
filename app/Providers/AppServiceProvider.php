@@ -7,6 +7,7 @@ use App\Models\Creator;
 use App\Models\PushNotification;
 use App\Models\Report;
 use App\Support\Iw;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -19,6 +20,9 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Keep indexed utf8mb4 strings under the 1000-byte key limit of older MySQL/MyISAM hosts.
+        Schema::defaultStringLength(191);
+
         View::composer('*', function ($view) {
             $view->with('ctx', session('ctx', 'All'));
         });
