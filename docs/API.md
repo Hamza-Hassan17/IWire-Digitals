@@ -1,101 +1,154 @@
-# iWire Mobile API — v1
+# iWire Mobile API v1
 
 **Base URL:** `https://iwire-digitals.ovationhealthcare.com.pk/api/v1`
 
-Every path below is relative to the base URL. Example: login is
-`POST https://iwire-digitals.ovationhealthcare.com.pk/api/v1/auth/login`.
+## Headers
 
-## Conventions
+- All requests: `Accept: application/json`
+- Requests with a JSON body: `Content-Type: application/json`
+- File uploads (avatar, creator uploads): `Content-Type: multipart/form-data`
+- 🔒 endpoints: `Authorization: Bearer {token}`
 
-| | |
-|---|---|
-| Request body | JSON — send `Content-Type: application/json` |
-| Recommended header | `Accept: application/json` |
-| Auth (🔒 endpoints) | `Authorization: Bearer {token}` — token from register/login |
-| Token lifetime | Does not expire. It is invalidated by `POST /auth/logout`, or when the account is suspended. |
-| IDs | Integers |
-| `duration` | Integer, **seconds** |
-| Images | Absolute `https` URLs (PNG/JPG). Always present; if the team hasn't uploaded artwork yet, the server returns generated artwork. |
-| Realtime / websockets | None. There are no channels or push sockets in v1; everything is plain REST. |
+Every response uses this envelope: `{ "success": true|false, "message": "...", "data": ... }`
 
-### Response envelope
+## Notes
 
-Every response, success or error, has this shape:
+- `duration` is in **seconds**.
+- All image fields are full URLs and are never null, except `avatar`, which is `null` until the user uploads a picture.
+- Dates are ISO 8601 (`2026-10-22T06:48:27+00:00`); `date_of_birth` is `YYYY-MM-DD`.
+- The token doesn't expire. It's invalidated by logout, by changing the password (other devices), by deleting the account, or when an admin suspends the account.
+- Paged lists return `meta`: `{ "current_page": 1, "last_page": 3, "per_page": 20, "total": 47 }`. Load the next page while `current_page < last_page`.
+- There are no websockets or realtime channels; it's all plain REST.
 
-```json
-{ "success": true, "message": "OK", "data": { } }
-```
+## Test accounts
 
-### Errors
+- Listener: `listener@iwire.app` / `listener123`
+- Creator: `creator@iwire.app` / `creator123`
 
-| Status | When | Body |
-|---|---|---|
-| 401 | Wrong email/password on login | `{ "success": false, "message": "Invalid credentials" }` |
-| 401 | Missing / invalid / logged-out token on 🔒 endpoint | `{ "success": false, "message": "Unauthenticated" }` |
-| 403 | Account suspended by an admin (login or any 🔒 call) — token is revoked | `{ "success": false, "message": "Your account has been suspended. Contact support." }` |
-| 403 | `stream_url` expired or tampered with | `{ "success": false, "message": "Link expired or invalid" }` |
-| 403 | A listener calls a `/creator/...` endpoint | `{ "success": false, "message": "This feature is for creator accounts." }` |
-| 404 | Item doesn't exist or isn't live | `{ "success": false, "message": "Not found" }` |
-| 409 | Withdrawing an upload that was already reviewed | `{ "success": false, "message": "Only submissions still pending review can be withdrawn." }` |
-| 422 | Validation | `{ "success": false, "message": "Validation failed", "errors": { "email": ["The email has already been taken."] } }` |
-| 429 | Rate limit — login/register 10/min · posting comments 20/min · creator uploads 10/min · everything else 120/min | `{ "success": false, "message": "Too many requests. Try again shortly." }` |
-| 500 | Server error | `{ "success": false, "message": "Server error" }` |
+## Endpoints
 
-**App handling:** on **401** from any 🔒 call → clear the stored token and go to login. On **403 suspended** → show the message and go to login.
+| # | Method | Path | Auth |
+|---|---|---|---|
+| | **Account** | | |
+| 1 | POST | `/auth/register` | — |
+| 2 | POST | `/auth/login` | — |
+| 3 | POST | `/auth/logout` | 🔒 |
+| 4 | GET | `/auth/me` | 🔒 |
+| | **App** | | |
+| 5 | GET | `/app/config` | — |
+| 6 | GET | `/pages/terms` | — |
+| 7 | GET | `/pages/privacy` | — |
+| | **Profile** | | |
+| 8 | GET | `/profile` | 🔒 |
+| 9 | PUT | `/profile` | 🔒 |
+| 10 | POST | `/profile/avatar` | 🔒 |
+| 11 | DELETE | `/profile/avatar` | 🔒 |
+| 12 | PUT | `/profile/password` | 🔒 |
+| 13 | DELETE | `/profile` | 🔒 |
+| | **Music** | | |
+| 14 | GET | `/music/home` | 🔒 |
+| 15 | GET | `/music/genres` | 🔒 |
+| 16 | GET | `/music/moods` | 🔒 |
+| 17 | GET | `/music/tracks/{id}` | 🔒 |
+| | **Films** | | |
+| 18 | GET | `/films/home?tab=for_you` | 🔒 |
+| 19 | GET | `/films/genres` | 🔒 |
+| 20 | GET | `/films/genres/{id}?page=1` | 🔒 |
+| 21 | GET | `/films/{id}` | 🔒 |
+| | **Search** | | |
+| 22 | GET | `/search?q=nova` | 🔒 |
+| 23 | GET | `/creators/{id}` | 🔒 |
+| | **Comments** | | |
+| 24 | GET | `/music/tracks/{id}/comments?page=1` · `/films/{id}/comments?page=1` | 🔒 |
+| 25 | POST | `/music/tracks/{id}/comments` · `/films/{id}/comments` | 🔒 |
+| 26 | DELETE | `/comments/{id}` | 🔒 |
+| | **Share** | | |
+| 27 | POST | `/music/tracks/{id}/share` · `/films/{id}/share` | 🔒 |
+| | **Creator** (creator accounts only) | | |
+| 28 | POST | `/creator/uploads` | 🔒 |
+| 29 | GET | `/creator/uploads?status=pending&page=1` | 🔒 |
+| 30 | GET | `/creator/uploads/{id}` | 🔒 |
+| 31 | DELETE | `/creator/uploads/{id}` | 🔒 |
+| 32 | GET | `/creator/stats` | 🔒 |
+| | **Playback** | | |
+| 33 | GET | `stream_url` (signed link from 17 / 21) | — |
 
 ---
 
-## 1. Auth
+## 1. Register: `POST /auth/register`
 
-### `POST /auth/register`
+**Request**
 
 ```json
-// request
 {
   "name": "Ali Khan",
   "email": "ali@mail.com",
   "password": "secret123",
   "password_confirmation": "secret123",
-  "account_type": "listener",          // "listener" | "creator"
-  "device_name": "Pixel 8"             // optional — label for the token
+  "account_type": "listener",
+  "device_name": "Pixel 8"
 }
 ```
 
-Rules: `name` required (max 80) · `email` valid, unique · `password` min 8, must match `password_confirmation` · `account_type` = `listener` or `creator`.
+- `account_type`: `"listener"` or `"creator"`.
+- `password`: at least 8 characters.
+- `device_name`: optional.
+
+**Response 201**
 
 ```json
-// 201 Created
 {
   "success": true,
   "message": "Registered",
   "data": {
     "token": "1|48k5yuMN9gIEjgFaICKxhq1AdH7trKjZZJy3bxRO14f8ac0d",
-    "user": { "id": 4, "name": "Ali Khan", "email": "ali@mail.com", "account_type": "listener", "avatar": null }
+    "user": {
+      "id": 4, "name": "Ali Khan", "email": "ali@mail.com", "account_type": "listener", "avatar": null,
+      "gender": null, "date_of_birth": null, "country": null, "bio": null,
+      "created_at": "2026-10-22T06:40:00+00:00"
+    }
   }
 }
 ```
 
-### `POST /auth/login`
+**The `user` object** (same everywhere a user is returned):
+
+| Field | Type |
+|---|---|
+| `id` | int |
+| `name` | string |
+| `email` | string |
+| `account_type` | `"listener"` or `"creator"` |
+| `avatar` | image URL or `null` |
+| `gender` | `"male"`, `"female"`, `"other"`, `"prefer_not_to_say"` or `null` |
+| `date_of_birth` | `"YYYY-MM-DD"` or `null` |
+| `country` | string or `null` |
+| `bio` | string or `null` |
+| `created_at` | date-time |
+
+## 2. Login: `POST /auth/login`
+
+**Request**
 
 ```json
-// request
-{ "email": "ali@mail.com", "password": "secret123", "device_name": "Pixel 8" }   // device_name optional
+{ "email": "ali@mail.com", "password": "secret123", "device_name": "Pixel 8" }
 ```
 
-Response **200**: same shape as register, with `"message": "Logged in"`.
-Errors: `401 Invalid credentials`, `403` suspended, `422` validation.
+`device_name` is optional.
 
-### `POST /auth/logout` 🔒
+**Response 200:** same shape as register, with `"message": "Logged in"`.
 
-No body. Revokes the token used for the call.
+## 3. Logout: `POST /auth/logout` 🔒
+
+No body. Revokes the current token.
 
 ```json
 { "success": true, "message": "Logged out", "data": null }
 ```
 
-### `GET /auth/me` 🔒
+## 4. Current user: `GET /auth/me` 🔒
 
-Call this on launch to check whether the stored token is still valid (200 = valid, 401 = log out).
+Call on app launch. **200** means the token is valid; **401** means log the user out.
 
 ```json
 {
@@ -111,26 +164,7 @@ Call this on launch to check whether the stored token is still valid (200 = vali
 }
 ```
 
-**`user` object** — used everywhere a user is returned (register, login, me, profile):
-
-| Field | Type |
-|---|---|
-| `id` | int |
-| `name` | string |
-| `email` | string |
-| `account_type` | `"listener"` \| `"creator"` |
-| `avatar` | image URL or `null` |
-| `gender` | `"male"` \| `"female"` \| `"other"` \| `"prefer_not_to_say"` \| `null` |
-| `date_of_birth` | `"YYYY-MM-DD"` or `null` |
-| `country` | string or `null` |
-| `bio` | string (max 500) or `null` |
-| `created_at` | ISO 8601 date-time |
-
----
-
-## 2. App config
-
-### `GET /app/config` (no auth)
+## 5. App config: `GET /app/config` (no auth)
 
 Call on the splash screen.
 
@@ -144,24 +178,138 @@ Call on the splash screen.
     "min_app_version": "1.0.0",
     "splash": {
       "music": { "title": "Slide Down For Music", "image": "https://iwire-digitals.ovationhealthcare.com.pk/images/studio-music.png" },
-      "films": { "title": "Slide Up For Films",  "image": "https://iwire-digitals.ovationhealthcare.com.pk/images/studio-films.png" }
+      "films": { "title": "Slide Up For Films", "image": "https://iwire-digitals.ovationhealthcare.com.pk/images/studio-films.png" }
     },
-    "support_email": "support@iwire.app"
+    "support_email": "support@iwire.app",
+    "android_store_url": null
   }
 }
 ```
 
-- `maintenance_mode: true` → show `maintenance_message` and block the app.
-- If the installed version is lower than `min_app_version` (semver, e.g. `1.2.0`) → force update.
-- All of these values are editable by the admin in **Control Room → Settings → Mobile app**.
+- If `maintenance_mode` is true, show `maintenance_message` and block the app.
+- If the installed version is lower than `min_app_version`, force an update.
 
----
+## 6. Terms & Conditions: `GET /pages/terms` (no auth)
 
-## 3. Music
+## 7. Privacy Policy: `GET /pages/privacy` (no auth)
 
-### `GET /music/home` 🔒
+Show on the sign-up screen and in Settings.
 
-Sections and their order are set by the admin in **Home Curation → Music home**. Render them in the order received. `key` is the section title in snake_case; new sections can appear, so don't hard-code the list.
+```json
+{
+  "success": true,
+  "message": "OK",
+  "data": {
+    "slug": "terms",
+    "title": "Terms & Conditions",
+    "content": "Welcome to iWire.\n\nBy using the app you agree to…",
+    "updated_at": "2026-10-22T07:00:00+00:00"
+  }
+}
+```
+
+- `content` is plain text. A blank line (`\n\n`) starts a new paragraph.
+- Until the admin saves the text, `content` is `""` and `updated_at` is `null`.
+- `/pages/privacy` returns the same shape, with `"slug": "privacy"` and `"title": "Privacy Policy"`.
+
+## 8. My profile: `GET /profile` 🔒
+
+Same response as `GET /auth/me`.
+
+## 9. Update profile: `PUT /profile` 🔒
+
+Send only the fields that changed. Send `null` to clear a field.
+
+**Request**
+
+```json
+{
+  "name": "Ali Khan",
+  "gender": "male",
+  "date_of_birth": "1998-04-12",
+  "country": "Pakistan",
+  "bio": "Music lover",
+  "email": "ali@mail.com"
+}
+```
+
+- `name`: max 80 characters.
+- `email`: must not belong to another account.
+- `gender`: `male`, `female`, `other` or `prefer_not_to_say`.
+- `date_of_birth`: `YYYY-MM-DD`, in the past.
+- `country`: max 80 characters. `bio`: max 500 characters.
+
+**Response 200**
+
+```json
+{
+  "success": true,
+  "message": "Profile updated",
+  "data": {
+    "user": {
+      "id": 2, "name": "Ali Khan", "email": "listener@iwire.app", "account_type": "listener", "avatar": null,
+      "gender": "male", "date_of_birth": "1998-04-12", "country": "Pakistan", "bio": "Music lover",
+      "created_at": "2026-10-15T07:07:19+00:00"
+    }
+  }
+}
+```
+
+## 10. Upload profile picture: `POST /profile/avatar` 🔒
+
+**Request** (`multipart/form-data`)
+
+| Field | Notes |
+|---|---|
+| `avatar` | JPG, PNG or WebP, max 5 MB. Square works best. |
+
+**Response 200:** `{ "success": true, "message": "Profile picture updated", "data": { "user": { ... } } }`. `user.avatar` holds the new image URL.
+
+## 11. Remove profile picture: `DELETE /profile/avatar` 🔒
+
+**Response 200:** `{ "success": true, "message": "Profile picture removed", "data": { "user": { ..., "avatar": null } } }`
+
+## 12. Change password: `PUT /profile/password` 🔒
+
+**Request**
+
+```json
+{ "current_password": "secret123", "password": "newsecret456", "password_confirmation": "newsecret456" }
+```
+
+- The new password must be at least 8 characters and different from the current one.
+- A wrong `current_password` returns 422.
+
+**Response 200**
+
+```json
+{ "success": true, "message": "Password changed", "data": null }
+```
+
+Other devices are signed out; this device stays signed in.
+
+## 13. Delete account: `DELETE /profile` 🔒
+
+Google Play requires apps to offer this.
+
+**Request**
+
+```json
+{ "password": "secret123" }
+```
+
+**Response 200**
+
+```json
+{ "success": true, "message": "Account deleted", "data": null }
+```
+
+- Deletes the account, profile picture and comments. Clear the token and go to the welcome screen.
+- A creator's already-published songs and films stay in the catalogue.
+
+## 14. Music home: `GET /music/home` 🔒
+
+Render the sections in the order received. The admin can add, rename or reorder sections, so don't hard-code the keys.
 
 ```json
 {
@@ -200,11 +348,28 @@ Sections and their order are set by the admin in **Home Curation → Music home*
 }
 ```
 
-Item: `id` int · `title` · `subtitle` (max ~80 chars) · `cover` square image URL · `artist`.
+## 15. Music genres: `GET /music/genres` 🔒
 
-### `GET /music/tracks/{id}` 🔒
+## 16. Moods: `GET /music/moods` 🔒
 
-Used by the player. 404 if the id isn't a live track.
+Ordered as set by the admin. Used for browse screens and the creator upload form.
+
+```json
+{
+  "success": true,
+  "message": "OK",
+  "data": [
+    { "id": 12, "name": "Chill" },
+    { "id": 13, "name": "Hype" },
+    { "id": 14, "name": "Focus" },
+    { "id": 15, "name": "Late Night" }
+  ]
+}
+```
+
+`/music/genres` returns the same shape (Hip-Hop, R&B, Electronic, Lo-fi, …).
+
+## 17. Track (player): `GET /music/tracks/{id}` 🔒
 
 ```json
 {
@@ -220,28 +385,24 @@ Used by the player. 404 if the id isn't a live track.
     "mood": "Late Night",
     "explicit": false,
     "duration": 222,
-    "stream_url": "https://iwire-digitals.ovationhealthcare.com.pk/api/v1/stream/1?expires=1792060000&signature=3f1c…"
+    "stream_url": "https://iwire-digitals.ovationhealthcare.com.pk/api/v1/stream/1?expires=1792060000&signature=3f1c...",
+    "share_url": "https://iwire-digitals.ovationhealthcare.com.pk/s/track/1"
   }
 }
 ```
 
-`mood` may be `null`. `explicit` → show an "E" badge.
+- `mood` can be `null`.
+- If `explicit` is true, show an "E" badge.
+- `stream_url` is `null` until the admin uploads the audio file. Show "Not available yet".
 
----
+## 18. Films home: `GET /films/home?tab=for_you` 🔒
 
-## 4. Films
+`tab` is `for_you` (the default), `new` or `trending`. Any other value returns 422.
 
-### `GET /films/home?tab=for_you` 🔒
-
-`tab`: `for_you` (default) · `new` · `trending`. Any other value → 422.
-
-| tab | `sections` |
-|---|---|
-| `for_you` | Curated rows set by the admin in **Home Curation → Films home** (e.g. `trending_now`, `new`) |
-| `new` | One section, `{ "key": "new_releases", "title": "New Releases" }`, newest first (max 20) |
-| `trending` | One section, `{ "key": "trending", "title": "Trending" }`, most played first (max 20) |
-
-`banners` (the hero carousel) is the same on every tab and is set by the admin.
+- `for_you`: sections curated by the admin.
+- `new`: one section with key `new_releases`.
+- `trending`: one section with key `trending`.
+- `banners` is the hero carousel. It's the same on every tab, and each banner's `id` is a film id.
 
 ```json
 {
@@ -276,11 +437,9 @@ Used by the player. 404 if the id isn't a live track.
 }
 ```
 
-Banner `id` is the **film id**, so tapping it opens `GET /films/{id}`. `image` is 16:9. `poster` is 2:3.
+Image sizes: banner `image` is 16:9; `poster` is 2:3.
 
-### `GET /films/genres` 🔒
-
-For the Genre tab. Ordered as set by the admin.
+## 19. Film genres: `GET /films/genres` 🔒
 
 ```json
 {
@@ -296,9 +455,9 @@ For the Genre tab. Ordered as set by the admin.
 }
 ```
 
-### `GET /films/genres/{id}?page=1` 🔒
+## 20. Films in a genre: `GET /films/genres/{id}?page=1` 🔒
 
-Films in a genre, 20 per page, most played first. `message` is the genre name. Keep requesting `page + 1` while `current_page < last_page`.
+20 films per page. Load the next page while `current_page < last_page`.
 
 ```json
 {
@@ -311,9 +470,7 @@ Films in a genre, 20 per page, most played first. `message` is the genre name. K
 }
 ```
 
-### `GET /films/{id}` 🔒
-
-404 if the id isn't a live film.
+## 21. Film detail: `GET /films/{id}` 🔒
 
 ```json
 {
@@ -329,94 +486,23 @@ Films in a genre, 20 per page, most played first. `message` is the genre name. K
     "duration": 6720,
     "creator": "Ilse Varga",
     "explicit": false,
-    "stream_url": "https://iwire-digitals.ovationhealthcare.com.pk/api/v1/stream/13?expires=1792060000&signature=9ab2…"
+    "stream_url": "https://iwire-digitals.ovationhealthcare.com.pk/api/v1/stream/13?expires=1792060000&signature=9ab2...",
+    "share_url": "https://iwire-digitals.ovationhealthcare.com.pk/s/film/13"
   }
 }
 ```
 
----
+`stream_url` is `null` until the admin uploads the video file.
 
-## 5. Streaming (`stream_url`)
+## 22. Search: `GET /search?q=nova&type=all&limit=10` 🔒
 
-- `stream_url` is a **signed link valid for 6 hours**. It needs **no** `Authorization` header, so hand it straight to the audio/video player (ExoPlayer / AVPlayer / just_audio / video_player).
-- It supports HTTP **Range** requests, so seeking works.
-- Don't cache the URL long-term. Fetch the track/film again when you need a new link (e.g. after the app was in the background for hours, or on a `403 Link expired or invalid`).
-- **`stream_url` is `null` when no media file has been uploaded for that item yet.** Show a "Not available yet" state rather than crashing. Admins upload files in **Library → item → Media & artwork**.
-
----
-
-## 6. Profile
-
-### `GET /profile` 🔒
-
-Same as `GET /auth/me`: returns `{ "data": { "user": {...} } }`.
-
-### `PUT /profile` 🔒
-
-Partial update — send **only** the fields that changed. All optional.
-
-```json
-// request
-{ "name": "Ali Khan", "gender": "male", "date_of_birth": "1998-04-12", "country": "Pakistan", "bio": "Music lover", "email": "ali@mail.com" }
-```
-
-Rules: `name` max 80 · `email` valid, not used by another account · `gender` one of `male`, `female`, `other`, `prefer_not_to_say` (or `null` to clear) · `date_of_birth` `YYYY-MM-DD`, in the past · `country` max 80 · `bio` max 500. Send `null` to clear a field.
-
-```json
-// 200
-{
-  "success": true,
-  "message": "Profile updated",
-  "data": {
-    "user": {
-      "id": 2, "name": "Ali Khan", "email": "listener@iwire.app", "account_type": "listener", "avatar": null,
-      "gender": "male", "date_of_birth": "1998-04-12", "country": "Pakistan", "bio": "Music lover",
-      "created_at": "2026-10-15T07:07:19+00:00"
-    }
-  }
-}
-```
-
-### `POST /profile/avatar` 🔒 — upload display picture
-
-`multipart/form-data` with one field: `avatar` (JPG / PNG / WebP, max 5 MB). Square images look best.
-Response: `{ "message": "Profile picture updated", "data": { "user": {...} } }` — `user.avatar` is the new image URL.
-
-### `DELETE /profile/avatar` 🔒 — remove display picture
-
-Response: `{ "message": "Profile picture removed", "data": { "user": { ..., "avatar": null } } }`
-
-### `PUT /profile/password` 🔒
-
-```json
-{ "current_password": "secret123", "password": "newsecret456", "password_confirmation": "newsecret456" }
-```
-
-New password min 8 and different from the current one. Wrong `current_password` → 422 on `current_password`.
-Response: `{ "success": true, "message": "Password changed", "data": null }`. **Other devices are signed out; this device stays signed in.**
-
-### `DELETE /profile` 🔒 — delete account
-
-```json
-{ "password": "secret123" }
-```
-
-Permanently deletes the account, profile picture and comments; all tokens stop working. (A creator's already-published songs/films stay in the catalogue.) Required by the App Store and Google Play.
-Response: `{ "success": true, "message": "Account deleted", "data": null }` → clear the token and go to the welcome screen.
-
----
-
-## 7. Search
-
-### `GET /search?q=nova&type=all&limit=10` 🔒
-
-| Param | |
+| Param | Notes |
 |---|---|
-| `q` | required, 2–100 characters. Matches title, genre and creator name. |
-| `type` | `all` (default) · `music` · `films` · `creators` — only that list is returned |
-| `limit` | 1–50 per list, default 10 |
+| `q` | Required, 2–100 characters. Matches title, genre and creator name. |
+| `type` | `all` (default), `music`, `films` or `creators`. Only that list is returned. |
+| `limit` | 1–50 per list. Default 10. |
 
-Only live (published) content and active creators are returned.
+Only published content and active creators are returned.
 
 ```json
 {
@@ -437,9 +523,9 @@ Only live (published) content and active creators are returned.
 }
 ```
 
-Tapping a result: track → `GET /music/tracks/{id}` · film → `GET /films/{id}` · creator → `GET /creators/{id}`.
+Tapping a result opens a track with 17, a film with 21, or a creator with 23.
 
-### `GET /creators/{id}` 🔒 — creator profile
+## 23. Creator page: `GET /creators/{id}` 🔒
 
 ```json
 {
@@ -461,22 +547,12 @@ Tapping a result: track → `GET /music/tracks/{id}` · film → `GET /films/{id
 }
 ```
 
-`type`: `"musician"` | `"filmmaker"`. 404 if the creator doesn't exist or is suspended.
+- `type` is `"musician"` or `"filmmaker"`.
+- Returns 404 if the creator doesn't exist or is suspended.
 
----
+## 24. List comments: `GET /music/tracks/{id}/comments?page=1` 🔒 or `GET /films/{id}/comments?page=1` 🔒
 
-## 8. Comments
-
-| Song | Film |
-|---|---|
-| `GET /music/tracks/{id}/comments?page=1` 🔒 | `GET /films/{id}/comments?page=1` 🔒 |
-| `POST /music/tracks/{id}/comments` 🔒 | `POST /films/{id}/comments` 🔒 |
-
-Delete your own comment: `DELETE /comments/{commentId}` 🔒 (404 if it isn't yours).
-
-All comments appear in the admin **Moderation** page. If an admin hides a comment, it disappears from these lists.
-
-### List — newest first, 20 per page
+Newest first, 20 per page.
 
 ```json
 {
@@ -504,53 +580,83 @@ All comments appear in the admin **Moderation** page. If an admin hides a commen
 }
 ```
 
-`is_mine: true` → show a delete option. `user.id` can be `null` for older comments that aren't linked to an app account.
+- If `is_mine` is true, show a delete option.
+- `user.id` can be `null` on older comments.
+- Comments an admin hides don't appear here.
 
-### Post
+## 25. Post a comment: `POST /music/tracks/{id}/comments` 🔒 or `POST /films/{id}/comments` 🔒
+
+**Request**
 
 ```json
-// request
-{ "body": "This bridge is unreal" }          // 1–1000 characters
+{ "body": "This bridge is unreal" }
 ```
 
+`body`: 1–1000 characters.
+
+**Response 201**
+
 ```json
-// 201
 {
   "success": true,
   "message": "Comment posted",
-  "data": { "id": 11, "body": "This bridge is unreal", "created_at": "2026-10-22T06:48:27+00:00", "time_ago": "0 seconds ago", "is_mine": true, "user": { "id": 2, "name": "Ali Khan", "avatar": null } }
+  "data": {
+    "id": 11,
+    "body": "This bridge is unreal",
+    "created_at": "2026-10-22T06:48:27+00:00",
+    "time_ago": "0 seconds ago",
+    "is_mine": true,
+    "user": { "id": 2, "name": "Ali Khan", "avatar": null }
+  }
 }
 ```
 
-404 if the song/film isn't live (or a film id is used on the music route and vice versa).
+## 26. Delete my comment: `DELETE /comments/{id}` 🔒
 
----
+**Response 200:** `{ "success": true, "message": "Comment deleted", "data": null }`
 
-## 9. Creators (creator accounts only)
+Returns 404 if the comment isn't yours.
 
-All `/creator/...` endpoints return **403** for listener accounts.
+## 27. Share: `POST /music/tracks/{id}/share` 🔒 or `POST /films/{id}/share` 🔒
 
-### `POST /creator/uploads` 🔒 — submit a song or film
+Call when the user taps **Share**, then pass `text` to Android's share sheet. Each call counts as one share.
 
-`multipart/form-data`:
+```json
+{
+  "success": true,
+  "message": "OK",
+  "data": {
+    "share_url": "https://iwire-digitals.ovationhealthcare.com.pk/s/track/1",
+    "text": "Listen to “Midnight Transit” by Nova Reyes on iWire: https://iwire-digitals.ovationhealthcare.com.pk/s/track/1"
+  }
+}
+```
+
+- `share_url` opens a web page with the cover, the title and an **Open in iWire** button. Messaging apps such as WhatsApp show it as a link preview.
+- The button opens the deep link `iwire://track/{id}` or `iwire://film/{id}`. **Register the `iwire` scheme in the Android app** (intent filter) and open the track or film screen for that id.
+
+## 28. Submit an upload: `POST /creator/uploads` 🔒 (creator accounts)
+
+**Request** (`multipart/form-data`)
 
 | Field | Required | Notes |
 |---|---|---|
-| `type` | ✅ | `music` or `films` |
-| `title` | ✅ | max 160 |
-| `genre` | ✅ | a name from `GET /music/genres` (music) or `GET /films/genres` (films) |
-| `mood` | — | music only; a name from `GET /music/moods` |
-| `description` | — | max 2000 |
-| `explicit` | — | `1` / `0` |
-| `duration` | ✅ | **seconds** (read it from the file on the phone) |
-| `file` | ✅ | music: MP3, M4A, AAC, WAV, FLAC, OGG (max 200 MB) · films: MP4, MOV, WebM, MKV |
-| `cover` | ✅ | JPG / PNG / WebP, max 5 MB — square for music, 2:3 poster for films |
-| `banner` | — | films only, 16:9, max 8 MB |
+| `type` | Yes | `music` or `films` |
+| `title` | Yes | Max 160 characters |
+| `genre` | Yes | A name from 15 (music) or 19 (films) |
+| `mood` | No | Music only. A name from 16 |
+| `description` | No | Max 2000 characters |
+| `explicit` | No | `1` or `0` |
+| `duration` | Yes | Seconds (read it from the file on the phone) |
+| `file` | Yes | Music: MP3, M4A, AAC, WAV, FLAC or OGG, max 200 MB. Films: MP4, MOV, WebM or MKV |
+| `cover` | Yes | JPG, PNG or WebP, max 5 MB. Square for music; 2:3 poster for films |
+| `banner` | No | Films only. 16:9, max 8 MB |
 
-The submission goes into the admin **Review Queue**. It appears in the app only after an admin approves it.
+The upload goes to the admin's Review Queue and only appears in the app after approval.
+
+**Response 201**
 
 ```json
-// 201
 {
   "success": true,
   "message": "Submitted for review",
@@ -563,7 +669,7 @@ The submission goes into the admin **Review Queue**. It appears in the app only 
     "description": "Debut single",
     "explicit": false,
     "duration": 204,
-    "cover": "https://iwire-digitals.ovationhealthcare.com.pk/storage/artwork/35/xYz.jpg",
+    "cover": "https://iwire-digitals.ovationhealthcare.com.pk/storage/artwork/35/cover.jpg",
     "banner": null,
     "status": "pending",
     "reject_reasons": [],
@@ -576,26 +682,32 @@ The submission goes into the admin **Review Queue**. It appears in the app only 
 }
 ```
 
-**Large films:** the server's upload size limit applies (set by the hosting plan). Show upload progress and handle a failed upload gracefully.
+Show upload progress. Large files can hit the server's upload size limit.
 
-### `GET /creator/uploads?status=pending&page=1` 🔒 — my uploads
+## 29. My uploads: `GET /creator/uploads?status=pending&page=1` 🔒
 
-`status` optional: `pending` · `live` · `rejected` · `unpublished`. Newest first, 20 per page, same item shape as above, plus `meta`.
+- `status` is optional: `pending`, `live`, `rejected` or `unpublished`.
+- Newest first, 20 per page.
+- Each item has the same shape as in 28, and the response includes `meta`.
 
-| `status` | Meaning for the creator |
+| `status` | Show the creator |
 |---|---|
 | `pending` | Waiting for admin review |
-| `live` | Approved — visible in the app |
-| `rejected` | Show `reject_reasons` (e.g. `["Quality"]`) and `reject_note` from the admin |
+| `live` | Approved and visible in the app |
+| `rejected` | `reject_reasons` (for example `["Quality"]`) and `reject_note` from the admin |
 | `unpublished` | Taken down by an admin |
 
-### `GET /creator/uploads/{id}` 🔒 — one upload (same shape)
+## 30. One upload: `GET /creator/uploads/{id}` 🔒
 
-### `DELETE /creator/uploads/{id}` 🔒 — withdraw
+Same shape as 28.
 
-Only while `pending`; otherwise **409**. Response: `{ "success": true, "message": "Submission withdrawn", "data": null }`.
+## 31. Withdraw an upload: `DELETE /creator/uploads/{id}` 🔒
 
-### `GET /creator/stats` 🔒
+Only while `status` is `pending`; otherwise it returns 409.
+
+**Response 200:** `{ "success": true, "message": "Submission withdrawn", "data": null }`
+
+## 32. Creator stats: `GET /creator/stats` 🔒
 
 ```json
 {
@@ -605,78 +717,25 @@ Only while `pending`; otherwise **409**. Response: `{ "success": true, "message"
 }
 ```
 
----
+## 33. Playback (`stream_url`)
 
-## 10. Genres & moods (for pickers and browse screens)
-
-| Endpoint | Returns |
-|---|---|
-| `GET /music/genres` 🔒 | `[{ "id": 1, "name": "Hip-Hop" }, ...]` |
-| `GET /music/moods` 🔒 | `[{ "id": 12, "name": "Chill" }, { "id": 13, "name": "Hype" }, { "id": 14, "name": "Focus" }, { "id": 15, "name": "Late Night" }]` |
-| `GET /films/genres` 🔒 | `[{ "id": 7, "name": "Drama" }, ...]` |
-
-All three are ordered as set by the admin in **Genres & Moods**.
+- Pass `stream_url` straight to the player (ExoPlayer or Media3). It needs **no** `Authorization` header.
+- Seeking works (the server supports Range requests).
+- The link expires after **6 hours**. On `403 "Link expired or invalid"`, call 17 or 21 again to get a new one.
 
 ---
 
-## 11. Terms & Privacy (no auth)
+## Errors
 
-`GET /pages/terms` · `GET /pages/privacy`
-
-```json
-{
-  "success": true,
-  "message": "OK",
-  "data": {
-    "slug": "terms",
-    "title": "Terms & Conditions",
-    "content": "Welcome to iWire.\n\nBy using the app you agree…",
-    "updated_at": "2026-10-22T07:00:00+00:00"
-  }
-}
-```
-
-`content` is plain text — a blank line (`\n\n`) starts a new paragraph. It's edited by the admin in **Settings → Terms & Privacy**. `content` is `""` and `updated_at` is `null` until the admin saves them. Show these on the sign-up screen and in Settings.
-
----
-
-## Demo accounts
-
-| Role | Email | Password |
+| HTTP | Body | App should |
 |---|---|---|
-| Listener | `listener@iwire.app` | `listener123` |
-| Creator | `creator@iwire.app` | `creator123` |
-
-## Endpoint summary
-
-| Method | Path | Auth |
-|---|---|---|
-| POST | `/auth/register` | — |
-| POST | `/auth/login` | — |
-| POST | `/auth/logout` | 🔒 |
-| GET | `/auth/me` | 🔒 |
-| GET | `/app/config` | — |
-| GET | `/pages/terms` · `/pages/privacy` | — |
-| GET | `/profile` | 🔒 |
-| PUT | `/profile` | 🔒 |
-| POST | `/profile/avatar` (multipart) | 🔒 |
-| DELETE | `/profile/avatar` | 🔒 |
-| PUT | `/profile/password` | 🔒 |
-| DELETE | `/profile` | 🔒 |
-| GET | `/search?q=&type=&limit=` | 🔒 |
-| GET | `/creators/{id}` | 🔒 |
-| GET | `/music/home` | 🔒 |
-| GET | `/music/genres` | 🔒 |
-| GET | `/music/moods` | 🔒 |
-| GET | `/music/tracks/{id}` | 🔒 |
-| GET / POST | `/music/tracks/{id}/comments` | 🔒 |
-| GET | `/films/home?tab=for_you\|new\|trending` | 🔒 |
-| GET | `/films/genres` | 🔒 |
-| GET | `/films/genres/{id}?page=` | 🔒 |
-| GET | `/films/{id}` | 🔒 |
-| GET / POST | `/films/{id}/comments` | 🔒 |
-| DELETE | `/comments/{id}` | 🔒 |
-| GET | `/creator/stats` | 🔒 creator |
-| GET / POST | `/creator/uploads` | 🔒 creator |
-| GET / DELETE | `/creator/uploads/{id}` | 🔒 creator |
-| GET | `/stream/{id}?expires=&signature=` | signed link (returned as `stream_url`) |
+| 401 | `{"success":false,"message":"Invalid credentials"}` | Show it on the login screen |
+| 401 | `{"success":false,"message":"Unauthenticated"}` | Clear the token and go to login |
+| 403 | `{"success":false,"message":"Your account has been suspended. Contact support."}` | Show the message and go to login |
+| 403 | `{"success":false,"message":"Link expired or invalid"}` | Fetch the track or film again |
+| 403 | `{"success":false,"message":"This feature is for creator accounts."}` | Hide creator screens for listeners |
+| 404 | `{"success":false,"message":"Not found"}` | Item missing, not published, or not yours |
+| 409 | `{"success":false,"message":"Only submissions still pending review can be withdrawn."}` | Show the message |
+| 422 | `{"success":false,"message":"Validation failed","errors":{"email":["The email has already been taken."]}}` | Show each message under its field |
+| 429 | `{"success":false,"message":"Too many requests. Try again shortly."}` | Retry later. Limits: login/register 10 per minute, posting comments 20 per minute, creator uploads 10 per minute, everything else 120 per minute |
+| 500 | `{"success":false,"message":"Server error"}` | Show a generic error |

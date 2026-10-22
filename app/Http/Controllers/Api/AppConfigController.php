@@ -18,6 +18,7 @@ class AppConfigController extends ApiController
             'splash_films_title' => 'Slide Up For Films',
             'splash_music_image' => null,
             'splash_films_image' => null,
+            'android_store_url' => null,
         ];
     }
 
@@ -40,6 +41,7 @@ class AppConfigController extends ApiController
                 'films' => ['title' => $s['splash_films_title'], 'image' => $img($s['splash_films_image'], 'images/studio-films.png')],
             ],
             'support_email' => $s['support_email'],
+            'android_store_url' => $s['android_store_url'],
         ]);
     }
 }

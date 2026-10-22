@@ -158,6 +158,30 @@ class MobileApiV1ExtrasTest extends TestCase
         $this->withToken($this->token())->getJson('/api/v1/creator/uploads')->assertForbidden()->assertJsonPath('message', 'This feature is for creator accounts.');
     }
 
+    public function test_share_links(): void
+    {
+        $t = $this->token();
+        $track = Content::where('type', 'Music')->where('status', 'Live')->first();
+        $film = Content::where('type', 'Films')->where('status', 'Live')->first();
+
+        $url = $this->withToken($t)->getJson("/api/v1/music/tracks/{$track->id}")->assertOk()->json('data.share_url');
+        $this->assertStringEndsWith("/s/track/{$track->id}", $url);
+        $this->withToken($t)->getJson("/api/v1/films/{$film->id}")->assertOk()->assertJsonPath('data.share_url', url("/s/film/{$film->id}"));
+
+        $shares = $track->shares;
+        $this->withToken($t)->postJson("/api/v1/music/tracks/{$track->id}/share")->assertOk()
+            ->assertJsonPath('data.share_url', $url)->assertJsonStructure(['data' => ['share_url', 'text']]);
+        $this->assertSame($shares + 1, $track->fresh()->shares);
+        $this->withToken($t)->postJson("/api/v1/films/{$film->id}/share")->assertOk();
+
+        // Public landing page with preview tags and a deep link; unpublished items 404.
+        $this->get("/s/track/{$track->id}")->assertOk()->assertSee('og:title', false)->assertSee("iwire://track/{$track->id}", false);
+        $this->get("/s/film/{$film->id}")->assertOk()->assertSee("iwire://film/{$film->id}", false);
+        $pending = Content::pending()->where('type', 'Music')->first();
+        $this->get("/s/track/{$pending->id}")->assertNotFound();
+        $this->get("/s/film/{$track->id}")->assertNotFound();
+    }
+
     public function test_music_genres_and_moods(): void
     {
         $t = $this->token();

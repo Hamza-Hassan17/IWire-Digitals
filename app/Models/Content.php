@@ -112,6 +112,18 @@ class Content extends Model
         return URL::temporarySignedRoute('api.stream', now()->addMinutes($minutes), ['content' => $this->id]);
     }
 
+    /** Public link people can share; opens a preview page with an "Open in app" button. */
+    public function getShareUrlAttribute(): string
+    {
+        return route('share', ['kind' => $this->is_music ? 'track' : 'film', 'id' => $this->id]);
+    }
+
+    /** Deep link the Android app registers to open this item directly. */
+    public function getAppLinkAttribute(): string
+    {
+        return 'iwire://'.($this->is_music ? 'track' : 'film').'/'.$this->id;
+    }
+
     public function getDurationSecondsAttribute(): int
     {
         return Iw::seconds($this->duration);

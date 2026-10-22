@@ -56,6 +56,7 @@ class MusicController extends ApiController
             'explicit' => $t->explicit,
             'duration' => $t->duration_seconds,
             'stream_url' => $t->streamUrl(),
+            'share_url' => $t->share_url,
         ]);
     }
 }

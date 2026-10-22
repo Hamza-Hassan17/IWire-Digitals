@@ -39,6 +39,7 @@
     <div class="fields">
       <label class="field"><span>Minimum app version</span><input class="input" name="min_app_version" value="{{ old('min_app_version', $app['min_app_version']) }}" placeholder="1.0.0" required></label>
       <label class="field"><span>Support email</span><input class="input" type="email" name="support_email" value="{{ old('support_email', $app['support_email']) }}" required></label>
+      <label class="field"><span>Google Play link <span class="faint">(shown on share pages)</span></span><input class="input" type="url" name="android_store_url" value="{{ old('android_store_url', $app['android_store_url']) }}" placeholder="https://play.google.com/store/apps/details?id=…"></label>
     </div>
     <div class="fields">
       @foreach (['music' => 'studio-music.png', 'films' => 'studio-films.png'] as $k => $fallback)

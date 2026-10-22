@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\MusicController;
 use App\Http\Controllers\Api\PageController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\SearchController;
+use App\Http\Controllers\Api\ShareApiController;
 use App\Http\Controllers\MediaController;
 use Illuminate\Support\Facades\Route;
 
@@ -45,6 +46,7 @@ Route::prefix('v1')->group(function () {
         Route::get('music/tracks/{track}', [MusicController::class, 'track'])->whereNumber('track');
         Route::get('music/tracks/{id}/comments', [CommentController::class, 'index'])->whereNumber('id');
         Route::post('music/tracks/{id}/comments', [CommentController::class, 'store'])->whereNumber('id')->middleware('throttle:api-comments');
+        Route::post('music/tracks/{id}/share', [ShareApiController::class, 'share'])->whereNumber('id');
 
         Route::get('films/home', [FilmController::class, 'home']);
         Route::get('films/genres', [FilmController::class, 'genres']);
@@ -52,6 +54,7 @@ Route::prefix('v1')->group(function () {
         Route::get('films/{film}', [FilmController::class, 'show'])->whereNumber('film');
         Route::get('films/{id}/comments', [CommentController::class, 'index'])->whereNumber('id');
         Route::post('films/{id}/comments', [CommentController::class, 'store'])->whereNumber('id')->middleware('throttle:api-comments');
+        Route::post('films/{id}/share', [ShareApiController::class, 'share'])->whereNumber('id');
 
         Route::delete('comments/{comment}', [CommentController::class, 'destroy'])->whereNumber('comment');
 

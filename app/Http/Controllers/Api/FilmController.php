@@ -78,6 +78,7 @@ class FilmController extends ApiController
             'creator' => $f->creator->name,
             'explicit' => $f->explicit,
             'stream_url' => $f->streamUrl(),
+            'share_url' => $f->share_url,
         ]);
     }
 

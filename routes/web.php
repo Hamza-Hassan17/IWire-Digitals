@@ -3,10 +3,14 @@
 use App\Http\Controllers\Admin;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\MediaController;
+use App\Http\Controllers\ShareController;
 use Illuminate\Support\Facades\Route;
 
 // Generated cover / banner art as PNG (used by the mobile API until real artwork is uploaded).
 Route::get('/media/art/{size}/{art}.png', [MediaController::class, 'art'])->name('media.art');
+
+// Public page behind share links (track / film).
+Route::get('/s/{kind}/{id}', [ShareController::class, 'show'])->whereIn('kind', ['track', 'film'])->whereNumber('id')->name('share');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'show'])->name('login');

@@ -50,6 +50,7 @@ class SettingsController extends Controller
             'maintenance_message' => 'nullable|string|max:300',
             'min_app_version' => ['required', 'regex:/^\d+\.\d+\.\d+$/'],
             'support_email' => 'required|email',
+            'android_store_url' => 'nullable|url|max:300',
             'splash_music_title' => 'required|string|max:60',
             'splash_films_title' => 'required|string|max:60',
             'splash_music_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:8192',
