@@ -16,39 +16,22 @@ class LibraryController extends Controller
 
     public function index(Request $request)
     {
-        $tab = $request->query('tab', session('ctx') === 'Films' ? 'Films' : 'Music');
+        $tab = $request->query('tab', 'Music');
         $tab = in_array($tab, ['Music', 'Films']) ? $tab : 'Music';
-        $f = [
-            'q' => (string) $request->query('q', ''),
-            'status' => $request->query('status', 'Any status'),
-            'genre' => $request->query('genre', 'Any genre'),
-            'creator' => $request->query('creator', 'Any creator'),
-            'date' => $request->query('date', 'Any time'),
-        ];
-        $view = $request->query('view', 'grid');
+        $q = (string) $request->query('q', '');
+        $statuses = ['Any status', ...self::STATUSES];
+        $status = in_array($request->query('status'), self::STATUSES) ? $request->query('status') : 'Any status';
 
         $base = Content::library()->where('type', $tab)->with('creator');
-        $src = (clone $base)->get();
+        $counts = (clone $base)->selectRaw('status, count(*) n')->groupBy('status')->pluck('n', 'status');
         $items = $base
-            ->when($f['q'] !== '', fn ($q) => $q->where(fn ($w) => $w->where('title', 'like', "%{$f['q']}%")->orWhereHas('creator', fn ($c) => $c->where('name', 'like', "%{$f['q']}%"))))
-            ->when($f['status'] !== 'Any status', fn ($q) => $q->where('status', $f['status']))
-            ->when($f['genre'] !== 'Any genre', fn ($q) => $q->where('genre', $f['genre']))
-            ->when($f['creator'] !== 'Any creator', fn ($q) => $q->whereHas('creator', fn ($c) => $c->where('name', $f['creator'])))
-            ->when($f['date'] !== 'Any time', fn ($q) => $q->where('submitted_at', '>=', now()->subDays((int) filter_var($f['date'], FILTER_SANITIZE_NUMBER_INT))))
+            ->when($q !== '', fn ($w) => $w->where(fn ($w) => $w->where('title', 'like', "%$q%")->orWhereHas('creator', fn ($c) => $c->where('name', 'like', "%$q%"))))
+            ->when($status !== 'Any status', fn ($w) => $w->where('status', $status))
             ->orderByDesc('plays')->get();
 
-        $live = $src->where('status', 'Live')->count();
-        $unpub = $src->where('status', 'Unpublished')->count();
-        $countLabel = number_format($live).' live '.($tab === 'Music' ? 'tracks' : 'films').' · '.$unpub.' unpublished';
+        $countLabel = number_format($counts['Live'] ?? 0).' live '.($tab === 'Music' ? 'tracks' : 'films').' · '.($counts['Unpublished'] ?? 0).' unpublished';
 
-        $filters = [
-            ['radio_button_checked', 'status', ['Any status', ...self::STATUSES]],
-            ['category', 'genre', ['Any genre', ...$src->pluck('genre')->unique()->sort()->values()]],
-            ['person', 'creator', ['Any creator', ...$src->map(fn ($c) => $c->creator->name)->unique()->sort()->values()]],
-            ['calendar_month', 'date', ['Any time', 'Last 7 days', 'Last 30 days', 'Last 90 days']],
-        ];
-
-        return view('admin.library.index', compact('tab', 'f', 'view', 'items', 'countLabel', 'filters'));
+        return view('admin.library.index', compact('tab', 'q', 'status', 'statuses', 'items', 'countLabel'));
     }
 
     public function show(Content $content)
@@ -56,13 +39,11 @@ class LibraryController extends Controller
         if ($content->status === 'Pending') {
             return redirect()->route('review.show', $content);
         }
-        $content->load(['creator', 'comments' => fn ($q) => $q->with('listener')->latest()->limit(4)]);
-        $ser = Iw::series(30, mb_strlen($content->title), 100, 22, 2);
+        $content->load(['creator', 'comments' => fn ($q) => $q->with(['listener', 'user'])->latest()->limit(4)]);
         $genreOpts = Genre::where('kind', $content->is_music ? 'music' : 'films')->orderBy('position')->pluck('name');
 
         return view('admin.library.show', [
             'd' => $content,
-            'line' => Iw::path($ser, 600, 160, 160, 40), 'area' => Iw::area($ser, 600, 160, 160, 40),
             'genreOpts' => $genreOpts->push($content->genre)->unique(),
             'moodOpts' => Genre::where('kind', 'moods')->orderBy('position')->pluck('name'),
         ]);

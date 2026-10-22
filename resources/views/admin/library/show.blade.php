@@ -6,10 +6,9 @@
     $live = $d->status === 'Live';
     $films = ! $d->is_music;
     $stats = [
-        ['play_circle', 'Plays', $d->plays_k, '+8.2% vs last week'],
-        ['share', 'Shares', Iw::k($d->shares), '+3.1%'],
-        ['chat_bubble', 'Comments', Iw::k($d->comments_count), '+44 this week'],
-        [$films ? 'timelapse' : 'repeat', $films ? 'Avg. completion' : 'Repeat listens', $films ? $d->progress.'%' : '38%', '+1.4 pts'],
+        ['play_circle', 'Plays', $d->plays_k, null],
+        ['share', 'Shares', Iw::k($d->shares), null],
+        ['chat_bubble', 'Comments', Iw::k($d->comments_count), null],
     ];
 @endphp
 
@@ -33,7 +32,6 @@
         <div class="t2" style="font-size:14.5px">{{ $d->creator->name }} · {{ $d->genre }} · {{ $d->duration }} · Uploaded {{ $d->submitted_at?->format('M j') }}</div>
       </div>
       <div class="row">
-        <button type="button" class="btn btn-md btn-primary" style="box-shadow:none" @click="$store.player.play(@js($d->toPlayer()))"><span class="ms fill" style="font-size:22px">play_arrow</span>Play</button>
         @if (in_array($d->status, ['Live', 'Unpublished', 'Flagged']))
           <form method="POST" action="{{ route('library.publish', $d) }}">@csrf
             <button class="btn btn-md" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.16)"><span class="ms">{{ $live ? 'visibility_off' : 'publish' }}</span>{{ $live ? 'Unpublish' : 'Republish' }}</button>
@@ -56,24 +54,24 @@
       <div class="card" style="border-radius:20px;padding:18px">
         <div class="row g6 fs13 muted"><span class="ms blue" style="font-size:18px">{{ $icon }}</span>{{ $label }}</div>
         <div class="num" style="font-size:28px;font-weight:800;margin-top:6px">{{ $value }}</div>
-        <div class="green sb" style="font-size:12.5px;margin-top:2px">{{ $delta }}</div>
+        
       </div>
     @endforeach
   </div>
 
   <div class="split-l">
     <div class="col g16" style="min-width:0">
-      <div class="card">
-        <div class="card-title">Plays · last 30 days</div>
-        <svg viewBox="0 0 600 160" preserveAspectRatio="none" style="width:100%;height:170px;margin-top:14px;display:block">
-          <defs><linearGradient id="lbg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0A9BFF" stop-opacity=".35"/><stop offset="1" stop-color="#0A9BFF" stop-opacity="0"/></linearGradient></defs>
-          <path d="{{ $area }}" fill="url(#lbg)"/><path d="{{ $line }}" fill="none" stroke="#0A9BFF" stroke-width="2.5" vector-effect="non-scaling-stroke"/>
-        </svg>
-      </div>
       <form method="POST" action="{{ route('library.media', $d) }}" enctype="multipart/form-data" class="card col g14">
         @csrf
         <div class="row between"><div class="card-title">Media & artwork</div><button class="btn btn-sm btn-primary" style="box-shadow:none"><span class="ms" style="font-size:18px">upload</span>Upload</button></div>
         <div class="fs13 muted">What the mobile app plays and shows. Media files are private — the app gets a signed link that expires.</div>
+        @if ($d->file_path)
+          @if ($films)
+            <video controls preload="metadata" src="{{ route('media.preview', $d) }}" poster="{{ $d->banner_url }}" style="width:100%;border-radius:14px;background:#000;aspect-ratio:16/9"></video>
+          @else
+            <audio controls preload="metadata" src="{{ route('media.preview', $d) }}" style="width:100%"></audio>
+          @endif
+        @endif
         @if ($errors->hasAny(['cover', 'banner', 'file']))<div class="err">{{ $errors->first('cover') ?: $errors->first('banner') ?: $errors->first('file') }}</div>@endif
         <div class="fields">
           <label class="field"><span>{{ $films ? 'Video file (MP4, MOV, WebM)' : 'Audio file (MP3, M4A, WAV, FLAC)' }}</span>
@@ -113,13 +111,13 @@
       <div class="row between" style="margin-bottom:6px"><div class="card-title">Comments</div><span class="fs13 muted num">{{ Iw::k($d->comments_count) }} comments</span></div>
       @forelse ($d->comments as $cm)
         <div class="row g12 start" style="padding:12px 0;border-top:1px solid var(--line-soft)">
-          <div class="avatar" style="width:32px;height:32px;background:{{ $cm->listener->art }};font-size:11px">{{ $cm->listener->initials }}</div>
-          <div class="grow"><div class="fs13"><b>{{ $cm->listener->name }}</b> <span class="faint">· {{ $cm->created_at->diffForHumans() }}</span></div><div class="t2" style="font-size:13.5px;margin-top:3px;line-height:1.45">{{ $cm->body }}</div></div>
+          <div class="avatar" style="width:32px;height:32px;background:{{ $cm->author_art }};font-size:11px">{{ $cm->author_initials }}</div>
+          <div class="grow"><div class="fs13"><b>{{ $cm->author_name }}</b> <span class="faint">· {{ $cm->created_at->diffForHumans() }}</span></div><div class="t2" style="font-size:13.5px;margin-top:3px;line-height:1.45">{{ $cm->body }}</div></div>
         </div>
       @empty
         <div class="fs13 muted" style="padding:12px 0;border-top:1px solid var(--line-soft)">No comments yet.</div>
       @endforelse
-      <a href="{{ route('comments.index', ['content' => $d->id]) }}" class="link mt8" style="display:block">Moderate all comments</a>
+      <a href="{{ route('moderation', ['tab' => 'comments', 'content' => $d->id]) }}" class="link mt8" style="display:block">Moderate all comments</a>
     </div>
   </div>
 

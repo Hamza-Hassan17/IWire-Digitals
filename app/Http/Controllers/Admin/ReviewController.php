@@ -18,28 +18,17 @@ class ReviewController extends Controller
 
     public function index(Request $request)
     {
-        $tab = $request->query('tab', session('ctx', 'All'));
-        $sort = $request->query('sort', 'oldest');
-        $genre = $request->query('genre', 'All genres');
-        $creator = $request->query('creator', 'All creators');
-        $view = $request->query('view', 'grid');
+        $tab = in_array($request->query('tab'), ['Music', 'Films']) ? $request->query('tab') : 'All';
 
-        $all = Content::pending()->with('creator')->get();
-        $items = $all->filter(fn ($c) => ($tab === 'All' || $c->type === $tab)
-            && ($genre === 'All genres' || $c->genre === $genre)
-            && ($creator === 'All creators' || $c->creator->name === $creator));
-        $items = ($sort === 'oldest' ? $items->sortBy('submitted_at') : $items->sortByDesc('submitted_at'))->values();
+        // Oldest first, so nothing waits too long.
+        $all = Content::pending()->with('creator')->orderBy('submitted_at')->get();
+        $items = $all->filter(fn ($c) => $tab === 'All' || $c->type === $tab)->values();
 
         $tabs = collect([['All', 'apps'], ['Music', 'graphic_eq'], ['Films', 'movie']])->map(fn ($t) => [
             'label' => $t[0], 'icon' => $t[1], 'n' => $all->filter(fn ($c) => $t[0] === 'All' || $c->type === $t[0])->count(),
         ]);
 
-        return view('admin.queue', [
-            'items' => $items, 'total' => $all->count(), 'tabs' => $tabs,
-            'tab' => $tab, 'sort' => $sort, 'genre' => $genre, 'creator' => $creator, 'view' => $view,
-            'genreOpts' => $all->pluck('genre')->unique()->values(),
-            'creatorOpts' => $all->map(fn ($c) => $c->creator->name)->unique()->values(),
-        ]);
+        return view('admin.queue', ['items' => $items, 'total' => $all->count(), 'tabs' => $tabs, 'tab' => $tab]);
     }
 
     public function bulk(Request $request)
@@ -104,7 +93,6 @@ class ReviewController extends Controller
             'c' => $content, 'cr' => $content->creator, 'stats' => $stats, 'pos' => $pos + 1, 'total' => $n,
             'prev' => $prev, 'next' => $next, 'checks' => $checks, 'dup' => $dup,
             'genreOpts' => $genreOpts, 'moodOpts' => $moodOpts, 'rows' => $rows->values(), 'reasons' => self::REASONS,
-            'wave' => Iw::wave(120, $content->id * 11 + 3), 'secs' => Iw::seconds($content->duration),
         ]);
     }
 

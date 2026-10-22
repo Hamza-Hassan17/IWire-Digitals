@@ -11,7 +11,7 @@ class AnalyticsController extends Controller
 {
     public function index()
     {
-        $ctx = session('ctx', 'All');
+        $ctx = 'All';
         $lib = Content::library()->ctx($ctx);
 
         $mS = Iw::series(90, 1, 95000, 14000, 300);

@@ -2,11 +2,15 @@
 
 namespace App\Providers;
 
+use App\Models\Comment;
 use App\Models\Content;
 use App\Models\Creator;
 use App\Models\PushNotification;
 use App\Models\Report;
 use App\Support\Iw;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -23,21 +27,27 @@ class AppServiceProvider extends ServiceProvider
         // Keep indexed utf8mb4 strings under the 1000-byte key limit of older MySQL/MyISAM hosts.
         Schema::defaultStringLength(191);
 
+        // Separate counters per limit; with plain "throttle:N,1" every limit shares one counter per user.
+        $who = fn (Request $r) => $r->user()?->id ?: $r->ip();
+        RateLimiter::for('api-auth', fn (Request $r) => Limit::perMinute(10)->by('auth|'.$r->ip()));
+        RateLimiter::for('api', fn (Request $r) => Limit::perMinute(120)->by('api|'.$who($r)));
+        RateLimiter::for('api-comments', fn (Request $r) => Limit::perMinute(20)->by('comments|'.$who($r)));
+        RateLimiter::for('api-uploads', fn (Request $r) => Limit::perMinute(10)->by('uploads|'.$who($r)));
+
         View::composer('*', function ($view) {
-            $view->with('ctx', session('ctx', 'All'));
+            $view->with('ctx', 'All');
         });
 
         View::composer('layouts.admin', function ($view) {
             $pending = Content::pending()->count();
             $openReports = Report::where('status', 'Open')->count();
 
+            $moderation = $openReports + Comment::where('status', 'Reported')->count();
+
             $nav = [
-                'MAIN' => [
+                'CONTENT' => [
                     ['route' => 'dashboard', 'match' => ['dashboard'], 'label' => 'Dashboard', 'icon' => 'space_dashboard'],
                     ['route' => 'queue.index', 'match' => ['queue.', 'review.'], 'label' => 'Review Queue', 'icon' => 'inventory', 'badge' => $pending],
-                    ['route' => 'reports.index', 'match' => ['reports.'], 'label' => 'Reports & Flags', 'icon' => 'flag', 'badge' => $openReports],
-                ],
-                'CONTENT' => [
                     ['route' => 'library.index', 'match' => ['library.'], 'label' => 'Library', 'icon' => 'video_library'],
                     ['route' => 'curation.index', 'match' => ['curation.'], 'label' => 'Home Curation', 'icon' => 'dashboard_customize'],
                     ['route' => 'genres.index', 'match' => ['genres.'], 'label' => 'Genres & Moods', 'icon' => 'category'],
@@ -45,14 +55,11 @@ class AppServiceProvider extends ServiceProvider
                 'PEOPLE' => [
                     ['route' => 'listeners.index', 'match' => ['listeners.'], 'label' => 'Listeners', 'icon' => 'headphones'],
                     ['route' => 'creators.index', 'match' => ['creators.'], 'label' => 'Creators', 'icon' => 'mic_external_on'],
-                    ['route' => 'comments.index', 'match' => ['comments.'], 'label' => 'Comments', 'icon' => 'forum'],
+                    ['route' => 'moderation', 'match' => ['moderation'], 'label' => 'Moderation', 'icon' => 'shield', 'badge' => $moderation, 'orange' => true],
                 ],
-                'PLATFORM' => [
-                    ['route' => 'push.index', 'match' => ['push.'], 'label' => 'Push Notifications', 'icon' => 'campaign'],
+                'MORE' => [
                     ['route' => 'analytics', 'match' => ['analytics'], 'label' => 'Analytics', 'icon' => 'monitoring'],
-                ],
-                'SYSTEM' => [
-                    ['route' => 'activity', 'match' => ['activity'], 'label' => 'Activity Log', 'icon' => 'history'],
+                    ['route' => 'push.index', 'match' => ['push.'], 'label' => 'Push Notifications', 'icon' => 'campaign'],
                     ['route' => 'settings', 'match' => ['settings'], 'label' => 'Settings', 'icon' => 'settings'],
                 ],
             ];
@@ -63,7 +70,7 @@ class AppServiceProvider extends ServiceProvider
                 $notifications->push(['icon' => 'inventory', 'color' => '#6CC4FF', 'bg' => 'rgba(10,155,255,.14)', 'text' => "$fresh new submissions in Review Queue", 'time' => Content::pending()->max('submitted_at') ? \Illuminate\Support\Carbon::parse(Content::pending()->max('submitted_at'))->diffForHumans() : '', 'unread' => true, 'url' => route('queue.index')]);
             }
             if ($r = Report::where('status', 'Open')->orderByDesc('count')->first()) {
-                $notifications->push(['icon' => 'flag', 'color' => '#FBA26A', 'bg' => 'rgba(249,128,52,.15)', 'text' => "“{$r->label}” reported {$r->count} times for ".strtolower($r->reason), 'time' => $r->created_at->diffForHumans(), 'unread' => true, 'url' => route('reports.index')]);
+                $notifications->push(['icon' => 'flag', 'color' => '#FBA26A', 'bg' => 'rgba(249,128,52,.15)', 'text' => "“{$r->label}” reported {$r->count} times for ".strtolower($r->reason), 'time' => $r->created_at->diffForHumans(), 'unread' => true, 'url' => route('moderation')]);
             }
             if ($old = Content::pending()->orderBy('submitted_at')->first()) {
                 if ($old->wait_hours >= 48) {

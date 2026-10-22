@@ -53,6 +53,16 @@
     <div class="row end"><button class="btn btn-sm btn-primary" style="box-shadow:none">Save app settings</button></div>
   </form>
 
+  <form method="POST" action="{{ route('settings.pages') }}" class="card col g16">
+    @csrf @method('PUT')
+    <div><div class="card-title">Terms & Privacy</div><div class="card-sub">Shown in the app by <code>GET /api/v1/pages/terms</code> and <code>/pages/privacy</code>. Plain text; blank lines start a new paragraph.</div></div>
+    @foreach (['terms' => $terms, 'privacy' => $privacy] as $slug => $page)
+      <label class="field"><span>{{ $page['title'] }} @if ($page['updated_at'])<span class="faint">· updated {{ \Illuminate\Support\Carbon::parse($page['updated_at'])->diffForHumans() }}</span>@endif</span>
+        <textarea class="input" name="{{ $slug }}" rows="8" placeholder="Paste your {{ strtolower($page['title']) }} here…">{{ old($slug, $page['content']) }}</textarea></label>
+    @endforeach
+    <div class="row end"><button class="btn btn-sm btn-primary" style="box-shadow:none">Save terms & privacy</button></div>
+  </form>
+
   <form method="POST" action="{{ route('settings.platform') }}" class="card col g16" x-data="{ ex: {{ $platform['require_explicit_label'] ? 'true' : 'false' }} }">
     @csrf @method('PUT')
     <input type="hidden" name="require_explicit_label" :value="ex ? 1 : 0">

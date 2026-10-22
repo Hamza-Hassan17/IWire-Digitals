@@ -24,6 +24,14 @@ class MediaController extends Controller
         return response()->file($disk->path($path), ['Content-Type' => 'image/png', 'Cache-Control' => 'public, max-age=31536000, immutable']);
     }
 
+    /** Control-room preview of any item's media file, including pending submissions. */
+    public function preview(Content $content)
+    {
+        abort_unless($content->file_path && Storage::disk('local')->exists($content->file_path), 404);
+
+        return response()->file(Storage::disk('local')->path($content->file_path), ['Cache-Control' => 'private, no-store']);
+    }
+
     /** Signed, expiring media stream. Supports HTTP Range requests for seeking. */
     public function stream(Content $content)
     {

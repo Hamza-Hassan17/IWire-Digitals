@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\Content;
 use App\Models\CurationRow;
+use App\Models\Genre;
 use Illuminate\Support\Str;
 
 class MusicController extends ApiController
@@ -28,6 +29,16 @@ class MusicController extends ApiController
         ])->filter(fn ($s) => $s['items']->isNotEmpty())->values();
 
         return $this->ok(['sections' => $sections]);
+    }
+
+    public function genres()
+    {
+        return $this->ok(Genre::where('kind', 'music')->orderBy('position')->get()->map(fn ($g) => ['id' => $g->id, 'name' => $g->name]));
+    }
+
+    public function moods()
+    {
+        return $this->ok(Genre::where('kind', 'moods')->orderBy('position')->get()->map(fn ($g) => ['id' => $g->id, 'name' => $g->name]));
     }
 
     public function track(int $track)

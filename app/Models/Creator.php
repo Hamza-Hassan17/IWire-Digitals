@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Support\Iw;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Creator extends Model
@@ -11,6 +12,11 @@ class Creator extends Model
     protected $guarded = [];
 
     protected $casts = ['joined_at' => 'date'];
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 
     public function contents(): HasMany
     {

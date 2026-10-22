@@ -34,9 +34,11 @@ Every response, success or error, has this shape:
 | 401 | Missing / invalid / logged-out token on 🔒 endpoint | `{ "success": false, "message": "Unauthenticated" }` |
 | 403 | Account suspended by an admin (login or any 🔒 call) — token is revoked | `{ "success": false, "message": "Your account has been suspended. Contact support." }` |
 | 403 | `stream_url` expired or tampered with | `{ "success": false, "message": "Link expired or invalid" }` |
+| 403 | A listener calls a `/creator/...` endpoint | `{ "success": false, "message": "This feature is for creator accounts." }` |
 | 404 | Item doesn't exist or isn't live | `{ "success": false, "message": "Not found" }` |
+| 409 | Withdrawing an upload that was already reviewed | `{ "success": false, "message": "Only submissions still pending review can be withdrawn." }` |
 | 422 | Validation | `{ "success": false, "message": "Validation failed", "errors": { "email": ["The email has already been taken."] } }` |
-| 429 | Rate limit (auth: 10/min, other 🔒 calls: 120/min) | `{ "success": false, "message": "Too many requests. Try again shortly." }` |
+| 429 | Rate limit — login/register 10/min · posting comments 20/min · creator uploads 10/min · everything else 120/min | `{ "success": false, "message": "Too many requests. Try again shortly." }` |
 | 500 | Server error | `{ "success": false, "message": "Server error" }` |
 
 **App handling:** on **401** from any 🔒 call → clear the stored token and go to login. On **403 suspended** → show the message and go to login.
@@ -99,11 +101,30 @@ Call this on launch to check whether the stored token is still valid (200 = vali
 {
   "success": true,
   "message": "OK",
-  "data": { "user": { "id": 4, "name": "Ali Khan", "email": "ali@mail.com", "account_type": "listener", "avatar": null } }
+  "data": {
+    "user": {
+      "id": 4, "name": "Ali Khan", "email": "ali@mail.com", "account_type": "listener", "avatar": null,
+      "gender": "male", "date_of_birth": "1998-04-12", "country": "Pakistan", "bio": "Music lover",
+      "created_at": "2026-10-15T07:07:19+00:00"
+    }
+  }
 }
 ```
 
-`user` object: `id` int · `name` string · `email` string · `account_type` `"listener" | "creator"` · `avatar` string URL or `null`.
+**`user` object** — used everywhere a user is returned (register, login, me, profile):
+
+| Field | Type |
+|---|---|
+| `id` | int |
+| `name` | string |
+| `email` | string |
+| `account_type` | `"listener"` \| `"creator"` |
+| `avatar` | image URL or `null` |
+| `gender` | `"male"` \| `"female"` \| `"other"` \| `"prefer_not_to_say"` \| `null` |
+| `date_of_birth` | `"YYYY-MM-DD"` or `null` |
+| `country` | string or `null` |
+| `bio` | string (max 500) or `null` |
+| `created_at` | ISO 8601 date-time |
 
 ---
 
@@ -324,6 +345,301 @@ Films in a genre, 20 per page, most played first. `message` is the genre name. K
 
 ---
 
+## 6. Profile
+
+### `GET /profile` 🔒
+
+Same as `GET /auth/me`: returns `{ "data": { "user": {...} } }`.
+
+### `PUT /profile` 🔒
+
+Partial update — send **only** the fields that changed. All optional.
+
+```json
+// request
+{ "name": "Ali Khan", "gender": "male", "date_of_birth": "1998-04-12", "country": "Pakistan", "bio": "Music lover", "email": "ali@mail.com" }
+```
+
+Rules: `name` max 80 · `email` valid, not used by another account · `gender` one of `male`, `female`, `other`, `prefer_not_to_say` (or `null` to clear) · `date_of_birth` `YYYY-MM-DD`, in the past · `country` max 80 · `bio` max 500. Send `null` to clear a field.
+
+```json
+// 200
+{
+  "success": true,
+  "message": "Profile updated",
+  "data": {
+    "user": {
+      "id": 2, "name": "Ali Khan", "email": "listener@iwire.app", "account_type": "listener", "avatar": null,
+      "gender": "male", "date_of_birth": "1998-04-12", "country": "Pakistan", "bio": "Music lover",
+      "created_at": "2026-10-15T07:07:19+00:00"
+    }
+  }
+}
+```
+
+### `POST /profile/avatar` 🔒 — upload display picture
+
+`multipart/form-data` with one field: `avatar` (JPG / PNG / WebP, max 5 MB). Square images look best.
+Response: `{ "message": "Profile picture updated", "data": { "user": {...} } }` — `user.avatar` is the new image URL.
+
+### `DELETE /profile/avatar` 🔒 — remove display picture
+
+Response: `{ "message": "Profile picture removed", "data": { "user": { ..., "avatar": null } } }`
+
+### `PUT /profile/password` 🔒
+
+```json
+{ "current_password": "secret123", "password": "newsecret456", "password_confirmation": "newsecret456" }
+```
+
+New password min 8 and different from the current one. Wrong `current_password` → 422 on `current_password`.
+Response: `{ "success": true, "message": "Password changed", "data": null }`. **Other devices are signed out; this device stays signed in.**
+
+### `DELETE /profile` 🔒 — delete account
+
+```json
+{ "password": "secret123" }
+```
+
+Permanently deletes the account, profile picture and comments; all tokens stop working. (A creator's already-published songs/films stay in the catalogue.) Required by the App Store and Google Play.
+Response: `{ "success": true, "message": "Account deleted", "data": null }` → clear the token and go to the welcome screen.
+
+---
+
+## 7. Search
+
+### `GET /search?q=nova&type=all&limit=10` 🔒
+
+| Param | |
+|---|---|
+| `q` | required, 2–100 characters. Matches title, genre and creator name. |
+| `type` | `all` (default) · `music` · `films` · `creators` — only that list is returned |
+| `limit` | 1–50 per list, default 10 |
+
+Only live (published) content and active creators are returned.
+
+```json
+{
+  "success": true,
+  "message": "OK",
+  "data": {
+    "query": "nova",
+    "tracks": [
+      { "id": 1, "title": "Midnight Transit", "artist": "Nova Reyes", "cover": "https://iwire-digitals.ovationhealthcare.com.pk/media/art/600x600/0-0.png", "genre": "Electronic", "duration": 222 }
+    ],
+    "films": [
+      { "id": 15, "title": "Signal Lost", "poster": "https://iwire-digitals.ovationhealthcare.com.pk/media/art/400x600/5-0.png", "genre": "Action" }
+    ],
+    "creators": [
+      { "id": 1, "name": "Nova Reyes", "type": "musician", "avatar": null, "uploads": 1 }
+    ]
+  }
+}
+```
+
+Tapping a result: track → `GET /music/tracks/{id}` · film → `GET /films/{id}` · creator → `GET /creators/{id}`.
+
+### `GET /creators/{id}` 🔒 — creator profile
+
+```json
+{
+  "success": true,
+  "message": "OK",
+  "data": {
+    "id": 1,
+    "name": "Nova Reyes",
+    "type": "musician",
+    "avatar": null,
+    "uploads": 1,
+    "bio": null,
+    "total_plays": 3200000,
+    "tracks": [
+      { "id": 1, "title": "Midnight Transit", "cover": "https://iwire-digitals.ovationhealthcare.com.pk/media/art/600x600/0-0.png", "genre": "Electronic", "duration": 222 }
+    ],
+    "films": []
+  }
+}
+```
+
+`type`: `"musician"` | `"filmmaker"`. 404 if the creator doesn't exist or is suspended.
+
+---
+
+## 8. Comments
+
+| Song | Film |
+|---|---|
+| `GET /music/tracks/{id}/comments?page=1` 🔒 | `GET /films/{id}/comments?page=1` 🔒 |
+| `POST /music/tracks/{id}/comments` 🔒 | `POST /films/{id}/comments` 🔒 |
+
+Delete your own comment: `DELETE /comments/{commentId}` 🔒 (404 if it isn't yours).
+
+All comments appear in the admin **Moderation** page. If an admin hides a comment, it disappears from these lists.
+
+### List — newest first, 20 per page
+
+```json
+{
+  "success": true,
+  "message": "OK",
+  "data": [
+    {
+      "id": 11,
+      "body": "This bridge is unreal",
+      "created_at": "2026-10-22T06:48:27+00:00",
+      "time_ago": "2 minutes ago",
+      "is_mine": true,
+      "user": { "id": 2, "name": "Ali Khan", "avatar": null }
+    },
+    {
+      "id": 1,
+      "body": "This bridge at 2:10 is unreal. On repeat all week.",
+      "created_at": "2026-10-15T07:05:12+00:00",
+      "time_ago": "6 days ago",
+      "is_mine": false,
+      "user": { "id": null, "name": "Ayesha Khan", "avatar": null }
+    }
+  ],
+  "meta": { "current_page": 1, "last_page": 1, "per_page": 20, "total": 2 }
+}
+```
+
+`is_mine: true` → show a delete option. `user.id` can be `null` for older comments that aren't linked to an app account.
+
+### Post
+
+```json
+// request
+{ "body": "This bridge is unreal" }          // 1–1000 characters
+```
+
+```json
+// 201
+{
+  "success": true,
+  "message": "Comment posted",
+  "data": { "id": 11, "body": "This bridge is unreal", "created_at": "2026-10-22T06:48:27+00:00", "time_ago": "0 seconds ago", "is_mine": true, "user": { "id": 2, "name": "Ali Khan", "avatar": null } }
+}
+```
+
+404 if the song/film isn't live (or a film id is used on the music route and vice versa).
+
+---
+
+## 9. Creators (creator accounts only)
+
+All `/creator/...` endpoints return **403** for listener accounts.
+
+### `POST /creator/uploads` 🔒 — submit a song or film
+
+`multipart/form-data`:
+
+| Field | Required | Notes |
+|---|---|---|
+| `type` | ✅ | `music` or `films` |
+| `title` | ✅ | max 160 |
+| `genre` | ✅ | a name from `GET /music/genres` (music) or `GET /films/genres` (films) |
+| `mood` | — | music only; a name from `GET /music/moods` |
+| `description` | — | max 2000 |
+| `explicit` | — | `1` / `0` |
+| `duration` | ✅ | **seconds** (read it from the file on the phone) |
+| `file` | ✅ | music: MP3, M4A, AAC, WAV, FLAC, OGG (max 200 MB) · films: MP4, MOV, WebM, MKV |
+| `cover` | ✅ | JPG / PNG / WebP, max 5 MB — square for music, 2:3 poster for films |
+| `banner` | — | films only, 16:9, max 8 MB |
+
+The submission goes into the admin **Review Queue**. It appears in the app only after an admin approves it.
+
+```json
+// 201
+{
+  "success": true,
+  "message": "Submitted for review",
+  "data": {
+    "id": 35,
+    "type": "music",
+    "title": "First Light",
+    "genre": "Electronic",
+    "mood": "Chill",
+    "description": "Debut single",
+    "explicit": false,
+    "duration": 204,
+    "cover": "https://iwire-digitals.ovationhealthcare.com.pk/storage/artwork/35/xYz.jpg",
+    "banner": null,
+    "status": "pending",
+    "reject_reasons": [],
+    "reject_note": null,
+    "plays": 0,
+    "comments": 0,
+    "submitted_at": "2026-10-22T06:50:00+00:00",
+    "reviewed_at": null
+  }
+}
+```
+
+**Large films:** the server's upload size limit applies (set by the hosting plan). Show upload progress and handle a failed upload gracefully.
+
+### `GET /creator/uploads?status=pending&page=1` 🔒 — my uploads
+
+`status` optional: `pending` · `live` · `rejected` · `unpublished`. Newest first, 20 per page, same item shape as above, plus `meta`.
+
+| `status` | Meaning for the creator |
+|---|---|
+| `pending` | Waiting for admin review |
+| `live` | Approved — visible in the app |
+| `rejected` | Show `reject_reasons` (e.g. `["Quality"]`) and `reject_note` from the admin |
+| `unpublished` | Taken down by an admin |
+
+### `GET /creator/uploads/{id}` 🔒 — one upload (same shape)
+
+### `DELETE /creator/uploads/{id}` 🔒 — withdraw
+
+Only while `pending`; otherwise **409**. Response: `{ "success": true, "message": "Submission withdrawn", "data": null }`.
+
+### `GET /creator/stats` 🔒
+
+```json
+{
+  "success": true,
+  "message": "OK",
+  "data": { "uploads": 12, "pending": 1, "live": 10, "rejected": 1, "total_plays": 284000, "total_comments": 312 }
+}
+```
+
+---
+
+## 10. Genres & moods (for pickers and browse screens)
+
+| Endpoint | Returns |
+|---|---|
+| `GET /music/genres` 🔒 | `[{ "id": 1, "name": "Hip-Hop" }, ...]` |
+| `GET /music/moods` 🔒 | `[{ "id": 12, "name": "Chill" }, { "id": 13, "name": "Hype" }, { "id": 14, "name": "Focus" }, { "id": 15, "name": "Late Night" }]` |
+| `GET /films/genres` 🔒 | `[{ "id": 7, "name": "Drama" }, ...]` |
+
+All three are ordered as set by the admin in **Genres & Moods**.
+
+---
+
+## 11. Terms & Privacy (no auth)
+
+`GET /pages/terms` · `GET /pages/privacy`
+
+```json
+{
+  "success": true,
+  "message": "OK",
+  "data": {
+    "slug": "terms",
+    "title": "Terms & Conditions",
+    "content": "Welcome to iWire.\n\nBy using the app you agree…",
+    "updated_at": "2026-10-22T07:00:00+00:00"
+  }
+}
+```
+
+`content` is plain text — a blank line (`\n\n`) starts a new paragraph. It's edited by the admin in **Settings → Terms & Privacy**. `content` is `""` and `updated_at` is `null` until the admin saves them. Show these on the sign-up screen and in Settings.
+
+---
+
 ## Demo accounts
 
 | Role | Email | Password |
@@ -340,10 +656,27 @@ Films in a genre, 20 per page, most played first. `message` is the genre name. K
 | POST | `/auth/logout` | 🔒 |
 | GET | `/auth/me` | 🔒 |
 | GET | `/app/config` | — |
+| GET | `/pages/terms` · `/pages/privacy` | — |
+| GET | `/profile` | 🔒 |
+| PUT | `/profile` | 🔒 |
+| POST | `/profile/avatar` (multipart) | 🔒 |
+| DELETE | `/profile/avatar` | 🔒 |
+| PUT | `/profile/password` | 🔒 |
+| DELETE | `/profile` | 🔒 |
+| GET | `/search?q=&type=&limit=` | 🔒 |
+| GET | `/creators/{id}` | 🔒 |
 | GET | `/music/home` | 🔒 |
+| GET | `/music/genres` | 🔒 |
+| GET | `/music/moods` | 🔒 |
 | GET | `/music/tracks/{id}` | 🔒 |
+| GET / POST | `/music/tracks/{id}/comments` | 🔒 |
 | GET | `/films/home?tab=for_you\|new\|trending` | 🔒 |
 | GET | `/films/genres` | 🔒 |
 | GET | `/films/genres/{id}?page=` | 🔒 |
 | GET | `/films/{id}` | 🔒 |
+| GET / POST | `/films/{id}/comments` | 🔒 |
+| DELETE | `/comments/{id}` | 🔒 |
+| GET | `/creator/stats` | 🔒 creator |
+| GET / POST | `/creator/uploads` | 🔒 creator |
+| GET / DELETE | `/creator/uploads/{id}` | 🔒 creator |
 | GET | `/stream/{id}?expires=&signature=` | signed link (returned as `stream_url`) |

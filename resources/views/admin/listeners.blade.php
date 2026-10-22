@@ -51,7 +51,15 @@
         <div class="avatar" style="width:72px;height:72px;background:{{ $open->art }};font-size:24px;font-weight:800;border:3px solid rgba(255,255,255,.15)">{{ $open->initials }}</div>
         <div style="font-size:22px;font-weight:800;margin-top:14px">{{ $open->name }}</div>
         <div class="muted" style="font-size:13.5px;margin-top:3px">{{ $open->email }}</div>
-        <div class="row g8 mt12">@include('admin.partials.status', ['s' => $open->status])<span class="pill neutral">{{ $open->device }} · {{ $open->location }}</span></div>
+        @php $u = $open->user; @endphp
+        <div class="row g8 mt12 wrap">
+          @include('admin.partials.status', ['s' => $open->status])
+          @if ($u)<span class="pill blue">App account</span>@endif
+          @foreach (array_filter([$u?->gender ? ucfirst(str_replace('_', ' ', $u->gender)) : null, $u?->date_of_birth ? 'Born '.$u->date_of_birth->format('M j, Y') : null, $u?->country ?? $open->location]) as $bit)
+            <span class="pill neutral">{{ $bit }}</span>
+          @endforeach
+        </div>
+        @if ($u?->bio)<div class="t2 fs13 mt12" style="line-height:1.5">{{ $u->bio }}</div>@endif
       </div>
       <div class="drawer-body">
         <div class="stat3">

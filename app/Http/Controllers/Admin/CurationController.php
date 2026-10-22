@@ -15,7 +15,7 @@ class CurationController extends Controller
 {
     public function index(Request $request)
     {
-        $tab = $request->query('tab', session('ctx') === 'Films' ? 'Films' : 'Music');
+        $tab = $request->query('tab', 'Music');
         $tab = in_array($tab, ['Music', 'Films']) ? $tab : 'Music';
 
         $published = [

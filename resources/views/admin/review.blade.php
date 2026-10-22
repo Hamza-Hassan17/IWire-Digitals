@@ -4,19 +4,14 @@
 @php use App\Support\Iw; $isMusic = $c->is_music; @endphp
 
 @section('content')
-<div class="page" x-data="reviewPage({{ $secs }}, {{ request()->boolean('reject') ? 'true' : 'false' }}, @js(old('reasons', [])))" @keydown.window="key($event)">
+<div class="page" x-data="reviewPage({{ request()->boolean('reject') ? 'true' : 'false' }}, @js(old('reasons', [])))" @keydown.escape.window="modal=null">
   <div class="row wrap g12">
     <a href="{{ route('queue.index') }}" class="back"><span class="ms" style="font-size:19px">arrow_back</span>Review Queue</a>
     <span class="muted" style="font-size:13.5px">Submission <b class="num" style="color:#fff">{{ $pos }}</b> of {{ $total }}</span>
     <div class="grow"></div>
-    <div class="row muted" style="font-size:12.5px">
-      <span class="row g6"><span class="kbd lt">A</span>Approve</span>
-      <span class="row g6"><span class="kbd lt">R</span>Reject</span>
-      <span class="row g6"><span class="kbd lt">J</span><span class="kbd lt">K</span>Next / prev</span>
-    </div>
     <div class="row g6">
-      <a href="{{ route('review.show', $prev) }}" title="Previous (K)" class="circle-btn" x-ref="prev"><span class="ms">keyboard_arrow_up</span></a>
-      <a href="{{ route('review.show', $next) }}" title="Next (J)" class="circle-btn" x-ref="next"><span class="ms">keyboard_arrow_down</span></a>
+      <a href="{{ route('review.show', $prev) }}" title="Previous" class="circle-btn" x-ref="prev"><span class="ms">keyboard_arrow_up</span></a>
+      <a href="{{ route('review.show', $next) }}" title="Next" class="circle-btn" x-ref="next"><span class="ms">keyboard_arrow_down</span></a>
     </div>
   </div>
 
@@ -57,59 +52,18 @@
 
   <div class="split-r">
     <div class="col g16" style="min-width:0">
-      @if ($isMusic)
-        <div class="card">
-          <div class="row between" style="margin-bottom:18px"><div class="card-title">Audio preview</div><div class="muted" style="font-size:12.5px">WAV · 24-bit · 48 kHz · Stereo</div></div>
-          <div class="row" style="gap:18px">
-            <button type="button" @click="playing=!playing" class="avatar" style="width:58px;height:58px;background:var(--blue);box-shadow:0 8px 24px rgba(10,155,255,.4)"><span class="ms fill" style="font-size:34px" x-text="playing ? 'pause' : 'play_arrow'">play_arrow</span></button>
-            <div class="grow">
-              <div class="wave" style="height:96px" @click="seek($event)" @mousemove="hover($event)" @mouseleave="hx=null">
-                @foreach ($wave as $k => $h)
-                  <i style="height:{{ max(8, $h) }}%" :style="{ background: {{ $k / count($wave) }} < pos ? '#0A9BFF' : (hx !== null && {{ $k / count($wave) }} < hx ? 'rgba(10,155,255,.45)' : 'rgba(255,255,255,.18)') }"></i>
-                @endforeach
-                <div :style="`position:absolute;top:-4px;bottom:-4px;left:${pos*100}%;width:2px;background:#fff;border-radius:1px;box-shadow:0 0 10px rgba(10,155,255,.9)`"></div>
-                <div x-show="hx !== null" x-cloak class="num" :style="`position:absolute;top:-30px;left:${hx*100}%;transform:translateX(-50%);font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:8px;background:#fff;color:#050B16`" x-text="fmt(hx*secs)"></div>
-              </div>
-              <div class="row between fs12 muted num mt8"><span x-text="fmt(pos*secs)"></span><span class="row g16"><span>Peak −0.8 dB</span><span>LUFS −9.4</span></span><span>{{ $c->duration }}</span></div>
-            </div>
-          </div>
-        </div>
-      @else
-        <div class="card" style="padding:16px">
-          <div style="aspect-ratio:16/9;border-radius:18px;background:{{ $c->art }};position:relative;overflow:hidden">
-            <div style="position:absolute;inset:0;background:linear-gradient(180deg, rgba(0,0,0,0) 55%, rgba(0,0,0,.75))"></div>
-            <button type="button" @click="playing=!playing" class="avatar" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:76px;height:76px;background:rgba(5,11,22,.6);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.2)"><span class="ms fill" style="font-size:44px" x-text="playing ? 'pause' : 'play_arrow'">play_arrow</span></button>
-            <div class="col g8" style="position:absolute;left:20px;right:20px;bottom:16px">
-              <div style="height:18px;display:flex;align-items:center;cursor:pointer;position:relative" @click="seek($event)" @mousemove="hover($event)" @mouseleave="hx=null">
-                <div style="height:5px;width:100%;border-radius:3px;background:rgba(255,255,255,.25);position:relative">
-                  <div :style="`position:absolute;left:0;top:0;bottom:0;width:${pos*100}%;background:#0A9BFF;border-radius:3px`"></div>
-                  <div :style="`position:absolute;top:50%;left:${pos*100}%;width:14px;height:14px;border-radius:50%;background:#fff;transform:translate(-50%,-50%)`"></div>
-                </div>
-                <div x-show="hx !== null" x-cloak class="col g6" :style="`position:absolute;bottom:26px;left:${hx*100}%;transform:translateX(-50%);align-items:center`">
-                  @foreach (range(0, 7) as $k)
-                    <div x-show="Math.min(7, Math.floor(hx*8)) === {{ $k }}" style="width:168px;aspect-ratio:16/9;border-radius:10px;background:{{ Iw::art($c->art_seed + $k, $k % 5) }};border:2px solid #fff;box-shadow:0 10px 30px rgba(0,0,0,.6)"></div>
-                  @endforeach
-                  <span class="num" style="font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:7px;background:#fff;color:#050B16" x-text="fmt(hx*secs)"></span>
-                </div>
-              </div>
-              <div class="row num fs13" style="gap:14px">
-                <button type="button" @click="pos=Math.max(0,pos-10/secs)"><span class="ms" style="font-size:22px">replay_10</span></button>
-                <button type="button" @click="pos=Math.min(1,pos+10/secs)"><span class="ms" style="font-size:22px">forward_10</span></button>
-                <span class="ms" style="font-size:22px">volume_up</span>
-                <span><span x-text="fmt(pos*secs)"></span> / <span x-text="fmt(secs)"></span></span><div class="grow"></div>
-                <span style="font-size:11px;font-weight:700;padding:2px 6px;border-radius:5px;border:1px solid rgba(255,255,255,.5)">4K</span><span class="ms" style="font-size:22px">subtitles</span><span class="ms" style="font-size:22px">fullscreen</span>
-              </div>
-            </div>
-          </div>
-          <div class="row g6 mt12">
-            @foreach (range(0, 7) as $k)
-              <div @click="pos={{ $k / 8 + 0.01 }}" class="grow" style="cursor:pointer;aspect-ratio:16/9;border-radius:8px;background:{{ Iw::art($c->art_seed + $k, $k % 5) }}"
-                   :style="{ border: '2px solid ' + (Math.floor(pos*8) === {{ $k }} ? '#0A9BFF' : 'transparent'), opacity: Math.floor(pos*8) === {{ $k }} ? 1 : .6 }"></div>
-            @endforeach
-          </div>
-        </div>
-      @endif
-
+      <div class="card">
+        <div class="row between" style="margin-bottom:14px"><div class="card-title">{{ $isMusic ? 'Listen' : 'Watch' }}</div><span class="muted" style="font-size:12.5px">{{ $c->duration }}</span></div>
+        @if ($c->file_path)
+          @if ($isMusic)
+            <audio controls preload="metadata" src="{{ route('media.preview', $c) }}" style="width:100%"></audio>
+          @else
+            <video controls preload="metadata" src="{{ route('media.preview', $c) }}" poster="{{ $c->banner_url }}" style="width:100%;border-radius:16px;background:#000;aspect-ratio:16/9"></video>
+          @endif
+        @else
+          <div class="panel muted fs13 row g8"><span class="ms amber">warning</span>No {{ $isMusic ? 'audio' : 'video' }} file was uploaded with this submission.</div>
+        @endif
+      </div>
       <form id="approveForm" method="POST" action="{{ route('review.approve', $c) }}" class="card col g16">
         @csrf
         <input type="hidden" name="feature" :value="feature">
@@ -219,23 +173,11 @@
 
 @push('scripts')
 <script>
-function reviewPage(secs, openReject, oldReasons) {
+function reviewPage(openReject, oldReasons) {
   return {
-    secs, playing: false, pos: 0.28, hx: null, modal: openReject ? 'reject' : null, reasons: oldReasons, feature: '',
+    modal: openReject ? 'reject' : null, reasons: oldReasons, feature: '',
     title: @js(old('title', $c->title)), genre: @js(old('genre', $c->genre)), mood: @js(old('mood', $c->mood ?? '')), explicit: {{ $c->explicit ? 'true' : 'false' }},
-    fmt: window.iwFmt,
-    init() { setInterval(() => { if (this.playing) this.pos = this.pos >= 1 ? 0 : this.pos + 0.005; }, 400); },
-    seek(e) { const r = e.currentTarget.getBoundingClientRect(); this.pos = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)); },
-    hover(e) { const r = e.currentTarget.getBoundingClientRect(); this.hx = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)); },
     toggleReason(r) { this.reasons = this.reasons.includes(r) ? this.reasons.filter(x => x !== r) : [...this.reasons, r]; },
-    key(e) {
-      if (/INPUT|TEXTAREA|SELECT/.test(e.target.tagName) || e.metaKey || e.ctrlKey || this.modal) return;
-      const k = e.key.toLowerCase();
-      if (k === 'a') document.getElementById('approveForm').submit();
-      else if (k === 'r') this.modal = 'reject';
-      else if (k === 'j') this.$refs.next.click();
-      else if (k === 'k') this.$refs.prev.click();
-    },
   };
 }
 </script>

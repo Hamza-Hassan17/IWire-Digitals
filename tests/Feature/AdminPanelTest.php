@@ -37,19 +37,20 @@ class AdminPanelTest extends TestCase
         $pending = Content::pending()->first();
         $live = Content::library()->where('type', 'Films')->first();
         $urls = [
-            '/', '/queue', '/queue?view=table&tab=Music', "/review/{$pending->id}", "/review/{$pending->id}?reject=1",
-            '/library', '/library?tab=Films&view=table&status=Live', "/library/{$live->id}",
+            '/', '/queue', '/queue?tab=Music', '/queue?tab=Films', "/review/{$pending->id}", "/review/{$pending->id}?reject=1",
+            '/library', '/library?tab=Films&status=Live&q=a', "/library/{$live->id}",
             '/curation', '/curation?tab=Films', '/genres', '/genres?tab=moods',
             '/listeners', '/listeners?open='.Listener::first()->id, '/creators', '/creators/'.Creator::first()->id,
-            '/reports', '/reports?status=All', '/comments', '/push', '/analytics', '/activity', '/settings', '/search?q=nova', '/search',
+            '/moderation', '/moderation?tab=reports&status=Closed', '/moderation?tab=comments', '/moderation?tab=comments&status=Reported&content='.$live->id,
+            '/push', '/analytics', '/settings',
         ];
-        foreach (['All', 'Music', 'Films'] as $ctx) {
-            $this->post('/context', ['ctx' => $ctx]);
-            foreach ($urls as $u) {
-                $this->get($u)->assertOk();
-            }
+        foreach ($urls as $u) {
+            $this->get($u)->assertOk();
         }
         $this->get('/listeners/export')->assertOk();
+        $this->get('/reports')->assertRedirect('/moderation?tab=reports');
+        $this->get('/comments')->assertRedirect('/moderation?tab=comments');
+        $this->get('/activity')->assertNotFound();
     }
 
     public function test_review_actions(): void

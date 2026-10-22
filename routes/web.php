@@ -15,8 +15,6 @@ Route::middleware('guest')->group(function () {
 
 Route::middleware(['auth', 'admin'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
-    Route::post('/context', [Admin\ShellController::class, 'context'])->name('context');
-    Route::get('/search', [Admin\ShellController::class, 'search'])->name('search');
 
     Route::get('/', [Admin\DashboardController::class, 'index'])->name('dashboard');
 
@@ -32,6 +30,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::post('/library/{content}/publish', [Admin\LibraryController::class, 'togglePublish'])->name('library.publish');
     Route::post('/library/{content}/media', [Admin\LibraryController::class, 'media'])->name('library.media');
     Route::delete('/library/{content}', [Admin\LibraryController::class, 'destroy'])->name('library.destroy');
+    Route::get('/media/preview/{content}', [MediaController::class, 'preview'])->name('media.preview');
 
     Route::get('/curation', [Admin\CurationController::class, 'index'])->name('curation.index');
     Route::post('/curation', [Admin\CurationController::class, 'save'])->name('curation.save');
@@ -51,11 +50,12 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/creators/{creator}', [Admin\CreatorController::class, 'show'])->name('creators.show');
     Route::post('/creators/{creator}/suspend', [Admin\CreatorController::class, 'toggleSuspend'])->name('creators.suspend');
 
-    Route::get('/reports', [Admin\ReportController::class, 'index'])->name('reports.index');
+    Route::get('/moderation', [Admin\ModerationController::class, 'index'])->name('moderation');
+    Route::redirect('/reports', '/moderation?tab=reports');
+    Route::redirect('/comments', '/moderation?tab=comments');
     Route::post('/reports/{report}/resolve', [Admin\ReportController::class, 'resolve'])->name('reports.resolve');
     Route::post('/reports/{report}/dismiss', [Admin\ReportController::class, 'dismiss'])->name('reports.dismiss');
 
-    Route::get('/comments', [Admin\CommentController::class, 'index'])->name('comments.index');
     Route::post('/comments/{comment}/visibility', [Admin\CommentController::class, 'toggle'])->name('comments.toggle');
     Route::delete('/comments/{comment}', [Admin\CommentController::class, 'destroy'])->name('comments.destroy');
 
@@ -63,11 +63,11 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::post('/push', [Admin\PushController::class, 'store'])->name('push.store');
 
     Route::get('/analytics', [Admin\AnalyticsController::class, 'index'])->name('analytics');
-    Route::get('/activity', [Admin\ActivityController::class, 'index'])->name('activity');
 
     Route::get('/settings', [Admin\SettingsController::class, 'index'])->name('settings');
     Route::put('/settings/profile', [Admin\SettingsController::class, 'profile'])->name('settings.profile');
     Route::put('/settings/password', [Admin\SettingsController::class, 'password'])->name('settings.password');
     Route::put('/settings/platform', [Admin\SettingsController::class, 'platform'])->name('settings.platform');
     Route::post('/settings/app', [Admin\SettingsController::class, 'app'])->name('settings.app');
+    Route::put('/settings/pages', [Admin\SettingsController::class, 'pages'])->name('settings.pages');
 });

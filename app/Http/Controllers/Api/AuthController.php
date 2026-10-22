@@ -84,6 +84,10 @@ class AuthController extends ApiController
 
     public static function user(User $u): array
     {
-        return ['id' => $u->id, 'name' => $u->name, 'email' => $u->email, 'account_type' => $u->account_type, 'avatar' => $u->avatar_url];
+        return [
+            'id' => $u->id, 'name' => $u->name, 'email' => $u->email, 'account_type' => $u->account_type, 'avatar' => $u->avatar_url,
+            'gender' => $u->gender, 'date_of_birth' => $u->date_of_birth?->toDateString(), 'country' => $u->country, 'bio' => $u->bio,
+            'created_at' => $u->created_at?->toIso8601String(),
+        ];
     }
 }

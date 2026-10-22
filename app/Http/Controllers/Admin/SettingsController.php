@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Api\AppConfigController;
+use App\Http\Controllers\Api\PageController;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Setting;
@@ -18,7 +19,27 @@ class SettingsController extends Controller
         return view('admin.settings', [
             'platform' => array_merge(self::DEFAULTS, Setting::get('platform', [])),
             'app' => AppConfigController::settings(),
+            'terms' => PageController::get('terms'),
+            'privacy' => PageController::get('privacy'),
         ]);
+    }
+
+    /** Terms & Conditions and Privacy Policy, served by GET /api/v1/pages/{terms|privacy}. */
+    public function pages(Request $request)
+    {
+        $data = $request->validate([
+            'terms' => 'nullable|string|max:100000',
+            'privacy' => 'nullable|string|max:100000',
+        ]);
+        foreach (PageController::PAGES as $slug => $title) {
+            $current = PageController::get($slug);
+            $content = (string) ($data[$slug] ?? '');
+            if ($content !== $current['content']) {
+                Setting::put("page.$slug", ['title' => $title, 'content' => $content, 'updated_at' => now()->toIso8601String()]);
+            }
+        }
+
+        return back()->with('toast', ['Terms & privacy saved — live in the app', 'ok']);
     }
 
     /** Values served to the mobile app by GET /api/v1/app/config. */
